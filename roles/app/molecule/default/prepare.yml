@@ -1,0 +1,34 @@
+---
+
+- name: Prepare
+  hosts: all,!mock
+  gather_facts: false
+  pre_tasks:
+    - name: Wait for systemd to complete initialization.  # noqa 303
+      ansible.builtin.raw: systemctl is-system-running
+      register: systemctl_status
+      until: "'running' in systemctl_status.stdout"
+      retries: 30
+      delay: 10
+      failed_when: false
+      changed_when: false
+
+  tasks:
+    - name: Check for Python
+      ansible.builtin.raw: test -e /usr/bin/python
+      changed_when: false
+      failed_when: false
+      register: check_python
+
+    - name: Install Python if none
+      ansible.builtin.raw: >
+        test -e /usr/bin/apt &&
+        (apt -y update && apt install -y python3-minimal) ||
+        true  # We need to install on Debian-based only
+      changed_when: false
+      when: check_python.rc != 0
+
+    - name: Install sudo
+      ansible.builtin.package:
+        name: sudo
+        state: present

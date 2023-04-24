@@ -1,0 +1,38 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: app_debian11
+    image: jrei/systemd-debian:11
+    platform: 'linux/amd64'
+    pre_build_image: true
+    command: "/lib/systemd/systemd"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+    groups:
+      - app
+    networks:
+      - name: "app_datalayer"
+    network_mode: "app_datalayer"
+  - name: app_mockdb
+    image: mysql:8.0
+    hostname: db
+    pre_build_image: true
+    command: "mysqld"
+    env:
+      MYSQL_ROOT_PASSWORD: 'passw0rd!23'
+    groups:
+      - db
+      - mock
+    networks:
+      - name: "app_datalayer"
+    network_mode: "app_datalayer"
+provisioner:
+  name: ansible
+  playbooks:
+    prepare: prepare.yml
+verifier:
+  name: ansible

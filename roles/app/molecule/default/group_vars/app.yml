@@ -1,0 +1,8 @@
+---
+
+app_db_type: "mysql"
+app_db_host: 'db'
+app_db_port: "3306"
+app_db_username: "root"
+app_db_database: "aparavi_app_test"
+app_db_password: "passw0rd!23"

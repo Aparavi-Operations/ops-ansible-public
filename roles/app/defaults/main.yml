@@ -1,0 +1,57 @@
+---
+app_type: "appagt"
+app_logical_name: "{{ app_variants[app_type] }}"
+app_service_name: 'aparavi-data-ia-{{ app_logical_name }}.service'
+app_platform_bind_addr: "preview.aparavi.com"
+app_parent_object: "f9975da9-5262-414d-8fd3-e5c565175827"
+app_package_checksum: >-
+  sha256:4c9074f3c7c9af80a95c00616dacdff87194655da2c224de28bd9ba5cf302ddc
+app_package_url: >-
+  https://updates.aparavi.com/updates-dia-aparavi/production/install-aparavi-data-ia-2.6.0-7315.run
+
+# Since App encrypts password and regenerates config file
+# we can't guarantee that after config update it will always have same values
+# so explicit restart allow is needed for config update
+app_restart_allowed: false
+
+app_base_url: "localhost"
+
+app_db_host: "127.0.0.1"
+app_db_port: 3306
+app_db_username: "root"
+app_db_database: "aparavi_db"
+app_db_password: "passw0rd!23"
+
+app_variants:
+  appagt: 'aggregator-collector'
+  agent: 'collector'
+  appliance: 'aggregator'
+  worker: 'worker'
+
+app_config_path: >-
+  /etc/opt/aparavi-data-ia/{{ app_logical_name }}/config/config.json
+app_config_updates:
+  appagt:
+    - path: 'node.nodeName'
+      value: '{{ ansible_hostname }}-appagent'
+    - path: 'node.parentObjectId'
+      value: '{{ app_parent_object | default("") }}'
+    - path: 'node.hostName'
+      value: '{{ ansible_hostname }}'
+    - path: 'node.bindTo'
+      value: '{{ app_platform_bind_addr }}'
+    - path: 'database.database'
+      value: '{{ app_db_database }}'
+    - path: 'database.user'
+      value: '{{ app_db_username }}'
+    - path: 'database.password'
+      value: '{{ app_db_password }}'
+    - path: 'database.passwordEncrypted'
+      value: 'false'
+    - path: 'database.host'
+      value: '{{ app_db_host }}'
+    - path: 'database.port'
+      value: '{{ app_db_port | int }}'
+
+app_secrets_config:
+  appagt: {}

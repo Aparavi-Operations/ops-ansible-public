@@ -1,0 +1,123 @@
+---
+
+- name: Aparavi App | Combine installer options
+  ansible.builtin.set_fact:
+    app_installer_opts: >-
+      {{ app_installer_opts | default("") }}
+      /cfg.{{ item.path }}='{{ item.value }}'
+  # no_log: true
+  loop: '{{ app_config_updates[app_type] }}'
+
+- name: Aparavi App | Load a variable file based on the OS type
+  ansible.builtin.include_vars: >
+    {{ lookup('ansible.builtin.first_found', params) }}
+  vars:
+    params:
+      files:
+        - 'app-{{ ansible_os_family | lower }}.yml'
+      paths:
+        - 'vars'
+  tags:
+    - aparavi_app
+
+- name: Aparavi App | Install dependencies
+  ansible.builtin.package:
+    name: '{{ app_dependencies }}'
+  tags:
+    - aparavi_app
+
+- name: Aparavi App | Include secrets management
+  ansible.builtin.include_tasks:
+    file: secrets.yml
+  tags:
+    - aparavi_app
+
+- name: Aparavi App | Check if app already installed
+  ansible.builtin.stat:
+    path: '/opt/aparavi-data-ia/{{ app_logical_name }}/'
+  register: app_folder_stat
+  tags:
+    - aparavi_app
+
+- name: Aparavi App | Download installer
+  ansible.builtin.get_url:
+    url: "{{ app_package_url }}"
+    dest: /tmp/linux-installer-latest.run
+    checksum: '{{ app_package_checksum }}'
+    mode: '0775'
+  when: not app_folder_stat.stat.exists | bool
+  tags:
+    - aparavi_app
+
+- name: Debug
+  ansible.builtin.debug:
+    msg: >
+      ./linux-installer-latest.run --
+      /APPTYPE={{ app_type }}
+      {{ app_installer_opts }}
+      /SILENT
+
+- name: Aparavi App | Install App
+  ansible.builtin.command:
+    cmd: >
+      ./linux-installer-latest.run --
+      /APPTYPE={{ app_type }}
+      {{ app_installer_opts }}
+      /SILENT
+    chdir: /tmp
+    creates: '/opt/aparavi-data-ia/{{ app_logical_name }}/'
+  when: not app_folder_stat.stat.exists | bool
+  tags:
+    - aparavi_appagent
+
+- name: Aparavi App | Check configuration only if we've just installed
+  when: app_folder_stat.stat.exists | bool and app_restart_allowed
+  block:
+
+    - name: Aparavi App | Slurp config file
+      ansible.builtin.slurp:
+        src: '{{ app_config_path }}'
+      register: app_config_raw
+      tags:
+        - aparavi_app
+
+    - name: Aparavi App | Set fact with config
+      ansible.builtin.set_fact:
+        app_config: "{{ app_config_raw['content'] | b64decode | from_json }}"
+      tags:
+        - aparavi_app
+
+    - name: Build a list of updates
+      ansible.builtin.set_fact:
+        update_list: "{{ update_list + update }}"
+      # no_log: true
+      loop: "{{ app_config_updates[app_type] }}"
+      vars:
+        update_list: []
+        update:
+          - path: 'app_config.{{ item.path }}'
+            value: '{{ item.value }}'
+      tags:
+        - aparavi_app
+
+    - name: Aparavi App | Update config variables
+      ansible.utils.update_fact:
+        updates: "{{ update_list }}"
+      register: app_config_updated
+      notify: Aparavi App | Update Aparavi config
+      diff: true
+      tags:
+        - aparavi_app
+
+    - name: Aparavi App | Run handlers
+      ansible.builtin.meta: flush_handlers
+      tags:
+        - aparavi_app
+
+- name: Aparavi App | Ensure Aparavi application enabled and running
+  ansible.builtin.systemd:
+    name: '{{ app_service_name }}'
+    state: started
+    enabled: true
+  tags:
+    - aparavi_app

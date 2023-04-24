@@ -1,0 +1,5 @@
+---
+
+- name: Aparavi App | Update Aparavi config
+  ansible.builtin.include_tasks: tasks/change_config.yml
+  when: app_config_updated.app_config is defined

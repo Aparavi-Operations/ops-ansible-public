@@ -1,0 +1,8 @@
+---
+
+- name: Converge
+  hosts: all,!mock
+  tasks:
+    - name: "Include Aparavi application"
+      ansible.builtin.include_role:
+        name: "app"

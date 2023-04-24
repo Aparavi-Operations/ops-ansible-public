@@ -1,0 +1,19 @@
+---
+
+- name: Aparavi App | Stop Aparavi application
+  ansible.builtin.systemd:
+    name: '{{ app_service_name }}'
+    state: stopped
+
+- name: Aparavi App | Update app config
+  ansible.builtin.copy:
+    dest: '{{ app_config_path }}'
+    content: '{{ app_config_updated.app_config | to_nice_json }}'
+    mode: 0640
+    owner: root
+    group: root
+
+- name: Aparavi App | Start Aparavi application
+  ansible.builtin.systemd:
+    name: '{{ app_service_name }}'
+    state: started

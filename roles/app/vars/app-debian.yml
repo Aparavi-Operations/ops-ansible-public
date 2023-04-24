@@ -1,0 +1,5 @@
+---
+
+app_dependencies:
+  - curl
+  - procps

@@ -1,0 +1,7 @@
+---
+
+- name: 'Windows configure | Copy Configuration File for {{ beat }}'
+  ansible.windows.win_template:
+    src: 'beat.yml.j2'
+    dest: '{{ conf_file }}'
+  notify: 'Restart Windows service'

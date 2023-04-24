@@ -1,0 +1,13 @@
+---
+
+- name: 'Install Windows exporter'
+  ansible.windows.win_package:
+    path: 'https://github.com/prometheus-community/windows_exporter/releases/download/v{{ windows_exporter_version }}/windows_exporter-{{ windows_exporter_version }}-amd64.msi'
+    arguments: >-
+      ENABLED_COLLECTORS={{ windows_exporter_enabled_collectors | join(",") }}
+      LISTEN_ADDR={{ windows_exporter_listen_address }}
+      LISTEN_PORT={{ windows_exporter_listen_port }}
+      {%- if windows_exporter_process_whitelist | length > 0 %}
+      EXTRA_FLAGS=--collector.process.whitelist="{{ windows_exporter_process_whitelist }}"
+      {%- endif %}
+    creates_service: 'windows_exporter'

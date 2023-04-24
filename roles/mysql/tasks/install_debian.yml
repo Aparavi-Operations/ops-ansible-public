@@ -1,0 +1,43 @@
+---
+
+- name: MySQL | Set MySQL server version
+  ansible.builtin.debconf:
+    name: mysql-apt-config
+    question: mysql-apt-config/select-server
+    vtype: select
+    value: "{{ mysql_server_version }}"
+  when: mysql_server_version is defined
+
+- name: MySQL | Download MySQL config deb
+  ansible.builtin.get_url:
+    url: "{{ mysql_repo }}"
+    dest: /usr/src
+    mode: 0444
+    owner: root
+    group: root
+    http_agent: "Wget/1.21"
+    # validate_certs: "no"
+
+- name: MySQL | Install MySQL repo deb
+  ansible.builtin.apt:
+    deb: "/usr/src/{{ mysql_package }}"
+
+- name: MySQL | Update cache
+  ansible.builtin.apt:
+    update_cache: true
+    allow_unauthenticated: true
+  changed_when: false
+
+- name: MySQL | Check if MySQL is already installed
+  ansible.builtin.shell: dpkg -s "mysql-server" | grep Status
+  register: installed_mysql
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+
+- name: MySQL | Install MySQL packages
+  ansible.builtin.apt:
+    pkg: "{{ mysql_packages }}"
+    state: present
+    allow_unauthenticated: true
+  register: install_mysql

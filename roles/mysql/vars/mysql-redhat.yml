@@ -1,0 +1,27 @@
+---
+
+mysql_package: "mysql80-community-release-el8-5.noarch.rpm"
+mysql_repo: "https://dev.mysql.com/get/{{ mysql_package }}"
+
+mysql_conf_path: "/etc/my.cnf"
+mysql_service_name: "mysqld"
+
+mysql_datadir: "/var/lib/mysql"
+mysql_socket: "/var/lib/mysql/mysql.sock"
+
+mysql_log_error: "/var/log/mysqld.log"
+mysql_log_general: "/var/log/mysqld_general.log"
+mysql_pid: "/var/run/mysqld/mysqld.pid"
+
+mysql_dependencies:
+  - net-tools
+  - libtirpc
+  - openssl
+  - libaio
+  - numactl-libs
+  - perl
+  - python3-pip
+
+mysql_packages:
+  - "mysql-community-common-{{ mysql_version }}.el8"
+  - "mysql-community-server-{{ mysql_version }}.el8"

@@ -1,0 +1,26 @@
+---
+
+galaxy_info:
+  author: Alexander Shlygin
+  description: Installs MySQL server as dependency for Aparavi applications
+  company: Aparavi AG
+
+  # If the issue tracker for your role is not on github, uncomment the
+  # next line and provide a value
+  # issue_tracker_url: http://example.com/issue/tracker
+
+  license: BSD-3-Clause
+
+  min_ansible_version: 2.1.0
+
+  platforms:
+    - name: EL
+      versions:
+        - '8'
+    - name: Debian
+      versions:
+        - bullseye
+
+  galaxy_tags: []
+
+dependencies: []

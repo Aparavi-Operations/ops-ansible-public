@@ -1,0 +1,6 @@
+---
+
+default_file: "/etc/sysconfig"
+repo_url: "https://artifacts.elastic.co/packages/{{ beats_major_version }}/yum"
+beats_pid_dir: "/var/run"
+beats_conf_dir: "/etc/{{beat}}"

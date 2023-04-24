@@ -1,0 +1,75 @@
+---
+
+- name: MySQL | Install PyMySQL with pip
+  ansible.builtin.pip:
+    name: 'PyMySQL'
+
+- name: MySQL | Check if root password already changed
+  community.mysql.mysql_query:
+    login_db: mysql
+    query: SELECT 1
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: "{{ mysql_socket }}"
+  failed_when: false
+  register: mysql_root_check
+
+# Try to get and use temporary password if root wasn't set
+- name: MySQL | Get temporary root password from install log
+  ansible.builtin.shell: >
+    set -e &&
+    cat {{ mysql_log_error }} | grep 'temporary password'
+    | grep -oE '[^ ]+$'
+  failed_when: false
+  changed_when: false
+  register: tmp_root_password
+  when: '"query_result" not in mysql_root_check'
+
+# RedHat installs are using temporary passwor
+# This password needs to be changed as expired
+- name: MySQL | Set root password with credentials
+  ansible.builtin.shell: >
+    mysql -u root -h localhost -p'{{ tmp_root_password.stdout }}' -e
+    'ALTER USER `root`@`localhost` IDENTIFIED BY "{{ mysql_root_password }}";'
+    -v --connect-expired-password
+  failed_when: false
+  changed_when: tmp_mysql_change.rc == 0
+  register: tmp_mysql_change
+  when:
+    - '"query_result" not in mysql_root_check'
+    - tmp_root_password.rc == 0
+
+# If not temp password - use mysql_old_root_password or empty
+- name: MySQL | Set root password (socket connection)
+  community.mysql.mysql_user:
+    name: "{{ mysql_root_user }}"
+    password: "{{ mysql_root_password }}"
+    priv: '*.*:ALL,GRANT'
+    state: present
+    check_implicit_admin: true
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_old_root_password }}"
+    login_unix_socket: "{{ mysql_socket }}"
+  when:
+    - '"query_result" not in mysql_root_check'
+    - tmp_root_password.rc != 0
+
+- name: MySQL | Create .my.cnf
+  ansible.builtin.template:
+    src: "client.my.cnf.j2"
+    dest: "/root/.my.cnf"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: MySQL | Ensure MySQL users are present
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_root_user }}"
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: "{{ mysql_socket }}"
+    name: "{{ item.name }}"
+    host: "{{ item.host | default('localhost') }}"
+    password: "{{ item.password }}"
+    priv: "{{  item.priv | default(['*.*:USAGE']) | join('/') }}"
+    append_privs: true
+  with_items: "{{ mysql_users }}"

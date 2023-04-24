@@ -1,0 +1,3 @@
+---
+
+beats_conf_dir: '{{ ansible_env.ProgramData }}\Elastic\Beats\{{ beat }}'

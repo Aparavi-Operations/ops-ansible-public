@@ -1,0 +1,43 @@
+---
+
+- name: 'Vector | Linux | Install | Get required ansible facts'
+  ansible.builtin.setup:
+    filter:
+      - 'ansible_distribution'
+      - 'ansible_distribution_release'
+      - 'ansible_distribution_major_version'
+      - 'ansible_pkg_mgr'
+
+- name: 'Vector | Linux | Install | Configure apt repository'
+  ansible.builtin.import_tasks: 'install_apt.yml'
+  when: 'ansible_pkg_mgr == "apt"'
+
+- name: 'Vector | Linux | Install | Configure dnf repository'
+  ansible.builtin.import_tasks: 'install_dnf.yml'
+  when: 'ansible_pkg_mgr == "dnf"'
+
+- name: 'Vector | Linux | Install | Create /etc/systemd/system/vector.service.d'
+  ansible.builtin.file:
+    path: '/etc/systemd/system/vector.service.d'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+
+- name: 'Vector | Linux | Install | Deploy Systemd drop-in'
+  ansible.builtin.template:
+    src: 'vector-drop-in.conf.j2'
+    dest: '/etc/systemd/system/vector.service.d/vector-drop-in.conf'
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+  notify:
+    - 'Restart Vector Linux'
+
+- name: 'Vector | Linux | Install | Create data_dir'
+  ansible.builtin.file:
+    path: '{{ vector_data_dir }}'
+    state: 'directory'
+    owner: '{{ vector_os_user }}'
+    group: '{{ vector_os_group }}'
+    mode: '0750'

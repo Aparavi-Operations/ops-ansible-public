@@ -1,0 +1,29 @@
+---
+
+- block:
+    - name: 'atop | Install'
+      ansible.builtin.package:
+        name: 'atop'
+        state: 'present'
+
+    - name: 'atop | Set collection interval'
+      ansible.builtin.lineinfile:
+        dest: '/etc/default/atop'
+        regex: '"^(#)?LOGINTERVAL\s*='
+        line: 'LOGINTERVAL={{ atop_interval_seconds }}'
+      notify:
+        - 'restart atop'
+      register: 'atop_config_file'
+
+    - name: 'atop | Set service enabled flag'
+      ansible.builtin.service:
+        name: 'atop'
+        enabled: true
+
+    - name: 'atop | Set service state'
+      ansible.builtin.service:
+        name: 'atop'
+        state: '{{ "stopped" if "packer" in group_names else "started" }}'
+      when: 'not atop_config_file is changed'
+
+  become: true

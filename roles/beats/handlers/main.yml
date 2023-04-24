@@ -1,0 +1,21 @@
+---
+
+- name: 'Restart Linux service'
+  become: true
+  service:
+    name: '{{ beat_product }}'
+    state: 'restarted'
+    enabled: true
+  when:
+    - 'beat_start_service'
+    - 'beat_restart_on_change'
+    - 'not beats_started.changed'
+
+- name: 'Restart Windows service'
+  ansible.windows.win_service:
+    name: '{{ beat }}'
+    state: 'restarted'
+  when:
+    - 'beat_start_service'
+    - 'beat_restart_on_change'
+    - 'not beats_started.changed'

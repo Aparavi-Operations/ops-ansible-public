@@ -1,0 +1,6 @@
+---
+
+redis_service_name: 'redis'
+
+redis_packages:
+  - 'redis'

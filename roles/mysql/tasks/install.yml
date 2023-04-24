@@ -1,0 +1,27 @@
+---
+
+- name: MySQL | Gather the package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: MySQL | Install
+  ansible.builtin.include_tasks:
+    file: install_redhat.yml
+    apply:
+      tags:
+        - mysql_server
+  when: ansible_os_family == "RedHat"
+  tags:
+    - install
+    - mysql_server
+
+- name: MySQL | Install
+  ansible.builtin.include_tasks:
+    file: install_debian.yml
+    apply:
+      tags:
+        - mysql_server
+  when: ansible_os_family == "Debian"
+  tags:
+    - install
+    - mysql_server

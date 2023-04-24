@@ -1,0 +1,33 @@
+---
+
+- name: 'Vector | Linux | Install | Apt | Import GPG key'
+  ansible.builtin.apt_key:
+    url: 'https://repositories.timber.io/public/vector/gpg.3543DB2D0A2BC4B8.key'
+    state: 'present'
+  register: '_result'
+  until: '_result is succeeded'
+  retries: 5
+  delay: 2
+
+- name: 'Vector | Linux | Install | Apt | Add repository'
+  ansible.builtin.apt_repository:
+    repo: 'deb https://repositories.timber.io/public/vector/deb/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main'
+    filename: 'timber-vector'
+    state: 'present'
+    update_cache: true
+  register: '_result'
+  until: '_result is succeeded'
+  retries: 5
+  delay: 2
+
+- name: 'Vector | Linux | Install | Apt | Install package'
+  ansible.builtin.apt:
+    name: 'vector={{ vector_version}}-1'
+    state: 'present'
+    allow_downgrade: true
+  register: '_result'
+  until: '_result is succeeded'
+  retries: 5
+  delay: 2
+  notify:
+    - 'Restart Vector Linux'

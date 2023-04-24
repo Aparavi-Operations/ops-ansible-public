@@ -1,0 +1,30 @@
+---
+
+mysql_version: 8.0.32-1
+mysql_deb_repo_version: 0.8.22-1
+
+# Users.
+mysql_root_user: root
+mysql_root_password: b!ankPassw0rd
+mysql_old_root_password: dummy
+
+mysql_appuser_name: user
+mysql_appuser_password: b!ankPassw0rd
+
+## Service options
+mysql_service_enabled: true
+mysql_service_state: started
+
+mysql_db_name: db
+
+mysql_databases:
+  - name: "{{ mysql_db_name }}"
+    collation: utf8mb4_unicode_ci
+    encoding: utf8mb4
+
+mysql_users:
+  - name: "{{ mysql_appuser_name }}"
+    host: "%"
+    password: "{{ mysql_appuser_password }}"
+    priv:
+      - '{{ mysql_db_name }}.*:ALL'

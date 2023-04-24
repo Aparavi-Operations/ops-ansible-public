@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+
+################### {{beat}} Configuration #########################
+
+############################# {{beat}} ######################################
+{{ beat_conf | to_nice_yaml(indent=2) }}
+
+###############################################################################
+############################# Libbeat Config ##################################
+# Base config file used by all other beats for using libbeat features
+
+############################# Output ##########################################
+
+{{ { 'output' : beat_output_conf } | to_nice_yaml(indent=2) }}
+
+{% if beat_shipper_conf is defined %}############################# Shipper #########################################
+
+{{ { 'shipper': beat_shipper_conf } | to_nice_yaml(indent=2) }}
+{% endif %}
+############################# Logging #########################################
+
+{{ { 'logging': beat_logging_conf } | to_nice_yaml(indent=2) }}

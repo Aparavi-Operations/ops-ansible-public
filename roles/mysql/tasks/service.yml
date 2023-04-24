@@ -1,0 +1,8 @@
+---
+
+- name: MySQL | Configuring service
+  ansible.builtin.systemd:
+    name: "{{ mysql_service_name }}"
+    state: "{{ mysql_service_state }}"
+    enabled: "{{ mysql_service_enabled }}"
+    daemon_reload: true

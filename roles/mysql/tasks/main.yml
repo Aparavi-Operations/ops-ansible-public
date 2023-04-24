@@ -1,0 +1,104 @@
+---
+
+- name: MySQL | Gather some default variables
+  ansible.builtin.include_vars: "mysql.yml"
+  tags:
+    - install
+    - configure
+    - service
+    - mysql_server
+
+- name: MySQL | Load a variable file based on the OS type, or default.
+  ansible.builtin.include_vars: >
+    {{ lookup('ansible.builtin.first_found', params) }}
+  vars:
+    params:
+      files:
+        - 'mysql-{{ ansible_os_family | lower }}.yml'
+        - mysql-default.yml
+      paths:
+        - 'vars'
+  tags:
+    - install
+    - configure
+    - service
+    - mysql_server
+
+- name: MySQL | Install
+  ansible.builtin.include_tasks:
+    file: install.yml
+    apply:
+      tags:
+        - mysql_server
+  when: >
+    ansible_architecture == 'x86_64' or
+    (ansible_architecture == 'aarch64' and ansible_os_family == 'RedHat')
+  tags:
+    - install
+    - mysql_server
+
+- name: MySQL | Configure
+  ansible.builtin.include_tasks:
+    file: config.yml
+    apply:
+      tags:
+        - mysql_server
+  when: >
+    ansible_architecture == 'x86_64' or
+    (ansible_architecture == 'aarch64' and ansible_os_family == 'RedHat')
+  tags:
+    - configure
+    - mysql_server
+
+- name: MySQL | Users
+  ansible.builtin.include_tasks:
+    file: users.yml
+    apply:
+      tags:
+        - mysql_server
+  when: >
+    ansible_architecture == 'x86_64' or
+    (ansible_architecture == 'aarch64' and ansible_os_family == 'RedHat')
+  tags:
+    - configure
+    - users
+    - mysql_server
+
+- name: MySQL | Databases
+  ansible.builtin.include_tasks:
+    file: databases.yml
+    apply:
+      tags:
+        - mysql_server
+  when: >
+    ansible_architecture == 'x86_64' or
+    (ansible_architecture == 'aarch64' and ansible_os_family == 'RedHat')
+  tags:
+    - configure
+    - databases
+    - mysql_server
+
+- name: MySQL | Service
+  ansible.builtin.include_tasks:
+    file: service.yml
+    apply:
+      tags:
+        - mysql_server
+  when: >
+    ansible_architecture == 'x86_64' or
+    (ansible_architecture == 'aarch64' and ansible_os_family == 'RedHat')
+  tags:
+    - service
+    - mysql_server
+
+- name: MySQL | Architecture error
+  ansible.builtin.debug:
+    msg: |
+      ########## Operation system is not supported ##########
+      Your {{ ansible_architecture }} system architecture and
+      {{ ansible_os_family }} distributive combination
+      is not supported!
+  when: >
+    not
+    (ansible_architecture == 'x86_64' or
+    (ansible_architecture == 'aarch64' and ansible_os_family == 'RedHat'))

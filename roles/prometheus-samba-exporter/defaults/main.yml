@@ -1,0 +1,13 @@
+---
+
+prometheus_samba_exporter_version: '1.22.11'
+prometheus_samba_exporter_service_enabled: true
+prometheus_samba_exporter_service_name: 'samba_exporter'
+prometheus_samba_exporter_service_state: 'started'
+prometheus_samba_exporter_listen_address: '0.0.0.0'
+prometheus_samba_exporter_listen_port: 9922'
+
+# Consul integration
+prometheus_samba_exporter_consul_integration: true
+prometheus_samba_exporter_consul_user: 'consul'
+prometheus_samba_exporter_consul_group: 'hashitools'

@@ -1,0 +1,5 @@
+---
+
+- name: 'Windows install | Install {{ beat }}'
+  ansible.windows.win_package:
+    path: 'https://artifacts.elastic.co/downloads/beats/{{ beat }}/{{ beat }}-{{ beat_version }}-windows-x86_64.msi'

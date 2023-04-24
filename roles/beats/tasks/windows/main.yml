@@ -1,0 +1,17 @@
+---
+
+- name: 'Windows | Install'
+  include_tasks: 'install.yml'
+  tags: 'install'
+
+- name: 'Windows | Configure'
+  include_tasks: 'configure.yml'
+  tags: 'configure'
+
+- name: 'Windows | Set service state'
+  ansible.windows.win_service:
+    name: '{{ beat }}'
+    start_mode: '{{ beat_start_service | ternary("auto", "disabled") }}'
+    state: '{{ beat_start_service | ternary("started", "stopped") }}'
+  register: 'beats_started'
+  tags: 'install'

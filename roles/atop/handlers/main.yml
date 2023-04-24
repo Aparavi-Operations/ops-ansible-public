@@ -1,0 +1,7 @@
+---
+
+- name: 'restart atop'
+  become: true
+  service:
+    name: 'atop'
+    state: 'restarted'

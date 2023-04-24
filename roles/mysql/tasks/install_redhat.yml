@@ -1,0 +1,57 @@
+---
+
+- name: MySQL | Create temporary packages directory
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: mysql_rpm
+  register: mysql_rpm_dir
+  when: '"mysql80-community-release" not in ansible_facts.packages'
+
+- name: MySQL | Download MySQL rpm repo info
+  ansible.builtin.get_url:
+    url: "{{ mysql_repo }}"
+    dest: "{{ mysql_rpm_dir.path }}"
+    mode: 0444
+    owner: root
+    group: root
+    http_agent: "Wget/1.21"
+  when: '"mysql80-community-release" not in ansible_facts.packages'
+
+- name: MySQL | Import repo GPG key from an url
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+
+- name: MySQL | Install MySQL rpm repo
+  ansible.builtin.dnf:
+    name: "{{ mysql_rpm_dir.path }}/{{ mysql_package }}"
+    state: present
+  when: '"mysql80-community-release" not in ansible_facts.packages'
+
+- name: MySQL | Remove temporary downloaded
+  ansible.builtin.file:
+    name: "{{ mysql_rpm_dir.path }}/{{ mysql_package }}"
+    state: absent
+  when: '"mysql80-community-release" not in ansible_facts.packages'
+
+- name: MySQL | Install MySQL dependencies
+  ansible.builtin.dnf:
+    name: "{{ mysql_dependencies }}"
+    update_cache: true
+    state: present
+  when: >
+    (mysql_packages|first not in ansible_facts.packages) or
+      (mysql_packages|first in ansible_facts.packages and
+      mysql_allow_updates|default(false))
+
+- name: MySQL | Install MySQL packages
+  ansible.builtin.dnf:
+    name: "{{ mysql_packages }}"
+    update_cache: true
+    state: present
+    disablerepo: '*'
+    enablerepo: 'mysql*-community*'
+  when: >
+    (mysql_packages|first not in ansible_facts.packages) or
+      (mysql_packages|first in ansible_facts.packages and
+      mysql_allow_updates|default(false))

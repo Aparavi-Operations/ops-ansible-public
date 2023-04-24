@@ -1,0 +1,23 @@
+---
+
+- name: 'Check variables'
+  include_tasks: 'check-vars.yml'
+
+- name: 'Define os-specific vars'
+  include_vars: '{{ ansible_os_family }}.yml'
+
+- name: 'Define common vars'
+  set_fact:
+    beat_product: '{{ beat }}'
+    conf_file: '{{ beats_conf_dir }}/{{ beat }}.yml'
+
+- name: 'Install and configure - Linux'
+  include_tasks: 'linux/main.yml'
+  when: ansible_os_family != 'Windows'
+
+- name: 'Install and configure - Windows'
+  include_tasks: 'windows/main.yml'
+  when: ansible_os_family == 'Windows'
+
+- name: 'Force all notified handlers to run at this point, not waiting for normal sync points'
+  meta: 'flush_handlers'

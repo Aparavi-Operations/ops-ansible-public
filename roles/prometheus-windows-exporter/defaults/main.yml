@@ -1,0 +1,17 @@
+---
+
+windows_exporter_version: '0.20.0'
+windows_exporter_listen_address: '0.0.0.0'
+windows_exporter_listen_port: 9182
+windows_exporter_enabled_collectors:
+  - 'cpu'
+  - 'cs'
+  - 'logical_disk'
+  - 'memory'
+  - 'net'
+  - 'os'
+  - 'process'
+  - 'system'
+  - 'tcp'
+  - 'time'
+windows_exporter_process_whitelist: '(node|engine)'

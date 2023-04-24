@@ -1,0 +1,9 @@
+---
+
+vector_version: '0.29.0'
+vector_conf: {}
+
+vector_started: true
+vector_enabled: true
+
+vector_https_proxy: ''

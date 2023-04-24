@@ -1,0 +1,34 @@
+---
+
+- name: 'Main | Install Samba exporter from the URL'
+  ansible.builtin.apt:
+    deb: '{{ prometheus_samba_exporter_url }}'
+  register: '__result'
+  until: '__result is succeeded'
+  retries: 3
+  delay: 3
+  become: true
+  notify:
+    - 'restart Samba exporter'
+
+- name: 'Main | Set service defaults'
+  template:
+    src: 'samba_exporter.default.j2'
+    dest: '/etc/default/samba_exporter'
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+  become: true
+  notify:
+    - 'restart Samba exporter'
+
+- name: 'Main | Sert Samba exporter service status'
+  ansible.builtin.systemd:
+    name: '{{ prometheus_samba_exporter_service_name }}'
+    state: '{{ prometheus_samba_exporter_service_state }}'
+    enabled: '{{ prometheus_samba_exporter_service_enabled }}'
+  become: true
+
+- name: 'Main | Register samba-exporter in Consul'
+  ansible.builtin.import_tasks: 'consul_integration.yml'
+  when: 'prometheus_samba_exporter_consul_integration | bool'

@@ -1,0 +1,14 @@
+---
+
+beat_version: '7.17.3'
+beat_oss_version: false
+beat_version_lock: true
+beat_use_repository: true
+beat_add_repository: "{{ beat_use_repository }}"
+
+beat_start_service: '{{ "packer" not in group_names }}'
+beat_restart_on_change: '{{ "packer" not in group_names }}'
+
+beat_daemon_args: ""
+
+beat_logging_conf: {"files":{"rotateeverybytes":10485760}}

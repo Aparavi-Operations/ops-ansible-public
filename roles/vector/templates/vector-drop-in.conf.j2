@@ -1,0 +1,6 @@
+[Service]
+User={{ vector_os_user }}
+Group={{ vector_os_group }}
+{% if vector_https_proxy | length > 0 %}
+Environment="https_proxy={{ vector_https_proxy | replace("%", "%%") }}"
+{% endif %}

@@ -1,0 +1,21 @@
+---
+
+- name: MySQL | Create mysql config
+  ansible.builtin.template:
+    src: "mysql.cnf.j2"
+    dest: "{{ mysql_conf_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+    force: true
+  notify: MySQL | Restart mysql
+
+- name: MySQL | Configuring service
+  ansible.builtin.systemd:
+    name: "{{ mysql_service_name }}"
+    state: "{{ mysql_service_state }}"
+    enabled: "{{ mysql_service_enabled }}"
+    daemon_reload: true
+
+- name: MySQL | Flush handlers to restart MySQL after previous initialization
+  ansible.builtin.meta: flush_handlers

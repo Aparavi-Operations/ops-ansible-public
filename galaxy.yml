@@ -1,0 +1,14 @@
+---
+namespace: aparavi
+name: public
+description: Aparavi ansible public collection
+version: 1.0.0
+repository: https://github.com/Aparavi-Operations/ops-ansible-public
+readme: README.md
+license:
+  - GPL-2.0-or-later
+license_file: ''
+tags: []
+dependencies: {}
+authors:
+  - Alexander Shlygin <alexander.shlygin@aparavi.com>

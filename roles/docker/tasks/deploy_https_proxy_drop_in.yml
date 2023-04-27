@@ -1,0 +1,28 @@
+---
+
+- block:
+    - name: 'Docker | Drop-in | Create /etc/systemd/system/docker.service.d'
+      ansible.builtin.file:
+        path: '/etc/systemd/system/docker.service.d'
+        state: 'directory'
+        owner: 'root'
+        group: 'root'
+        mode: '0755'
+
+    - name: 'Docker | Drop-in | Deploy Systemd drop-in'
+      ansible.builtin.template:
+        src: 'docker-https-proxy-drop-in.conf.j2'
+        dest: '/etc/systemd/system/docker.service.d/docker-https-proxy-drop-in.conf'
+        owner: 'root'
+        group: 'root'
+        mode: '0644'
+      notify:
+        - 'Restart Docker'
+
+  when: 'docker_https_proxy | length > 0'
+
+- name: 'Docker | Drop-in | Ensure drop-in is not exists'
+  ansible.builtin.file:
+    path: '/etc/systemd/system/docker.service.d/docker-https-proxy-drop-in.conf'
+    state: 'absent'
+  when: 'docker_https_proxy | length == 0'

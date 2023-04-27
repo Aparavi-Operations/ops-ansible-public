@@ -1,0 +1,4 @@
+---
+
+docker_version: '5:20.10.23~3-0~debian-bullseye'
+docker_https_proxy: ''

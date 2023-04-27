@@ -1,0 +1,32 @@
+---
+
+- name: 'Docker | Get required ansible facts'
+  ansible.builtin.setup:
+    filter:
+      - 'ansible_distribution'
+      - 'ansible_distribution_release'
+      - 'ansible_distribution_major_version'
+      - 'ansible_pkg_mgr'
+
+- name: 'Docker | Import vars'
+  ansible.builtin.include_vars: '{{ ansible_pkg_mgr }}.yml'
+
+- name: 'Docker | Install using apt'
+  ansible.builtin.import_tasks: 'install_apt.yml'
+  become: true
+  when: 'ansible_pkg_mgr == "apt"'
+
+- name: 'Docker | Install using dnf'
+  ansible.builtin.import_tasks: 'install_dnf.yml'
+  become: true
+  when: 'ansible_pkg_mgr == "dnf"'
+
+- name: 'Docker | Deploy https proxy drop-in'
+  ansible.builtin.import_tasks: 'deploy_https_proxy_drop_in.yml'
+  become: true
+
+- name: 'Docker | Start Docker'
+  ansible.builtin.service:
+    name: 'docker'
+    state: 'started'
+    enabled: true

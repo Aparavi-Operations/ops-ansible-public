@@ -1,0 +1,31 @@
+---
+
+- name: 'Docker | Dnf | Ensure old versions of Docker are not installed'
+  ansible.builtin.package:
+    name:
+      - 'docker'
+      - 'docker-common'
+      - 'docker-engine'
+    state: 'absent'
+
+- name: 'Docker | Dnf | Add Docker GPG key'
+  ansible.builtin.rpm_key:
+    key: '{{ docker_key }}'
+    state: present
+
+- name: 'Docker | Dnf | Add Docker repository'
+  ansible.builtin.get_url:
+    url: '{{ docker_repo }}'
+    dest: '/etc/yum.repos.d/docker-ce.repo'
+    owner: 'root'
+    group: root
+    mode: '0644'
+
+- name: 'Docker | Dnf | Install Docker'
+  ansible.builtin.dnf:
+    name:
+      - 'docker-ce'
+      - 'docker-ce-cli'
+      - 'containerd.io'
+      - 'docker-compose-plugin'
+    state: 'present'

@@ -1,0 +1,37 @@
+---
+
+name: "Manually dispatched tests"
+on:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
+
+      - name: Run linter for all roles in roles folder
+        run: |
+          echo -e "=============== Install ansible-lint ===============\n"
+          apt update
+          apt install -y python3-pip
+          pip install ansible ansible-lint
+          echo -e "=============== Run ansible-lint for all roles ===============\n"
+          nofail=0
+          failed_roles=""
+          for dir in ./roles/*; do
+            echo "=== Running linter in ${dir} ==="
+            ansible-lint $dir && excode=$? || excode=$?
+            if [ "${excode}" != "0" ]; then
+              nofail=1
+              failed_roles="${failed_roles}\n${dir}"
+              echo "=== !!! found errors for ${dir} !!! ==="
+            fi
+            echo -e "=== ${dir} done ===\n\n"
+          done
+          if [ "${nofail}" != "0" ]; then
+            echo -e "!!! There were fails during linter run in:\n ${failed_roles}"
+            exit 1
+          fi

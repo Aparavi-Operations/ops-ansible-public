@@ -10,7 +10,7 @@
     dest: '/etc/consul.d/node-exporter.hcl'
     owner: '{{ node_exporter_consul_user }}'
     group: '{{ node_exporter_consul_group }}'
-    mode: 0400
+    mode: '0400'
   become: true
   notify:
     - 'Prometheus nodejs | Reload consul config'

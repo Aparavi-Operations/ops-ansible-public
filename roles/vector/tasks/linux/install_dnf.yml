@@ -4,17 +4,20 @@
   ansible.builtin.yum_repository:
     name: 'timber-vector'
     description: 'Vector log shipping'
-    baseurl: 'https://repositories.timber.io/public/vector/rpm/el/{{ ansible_distribution_major_version }}/$basearch'
+    baseurl: >-
+      https://repositories.timber.io/public/vector/rpm/el/{{
+      ansible_distribution_major_version }}/$basearch
     gpgcheck: true
     repo_gpgcheck: true
-    gpgkey: 'https://repositories.timber.io/public/vector/gpg.3543DB2D0A2BC4B8.key'
+    gpgkey: >-
+      https://repositories.timber.io/public/vector/gpg.3543DB2D0A2BC4B8.key
     state: 'present'
     enabled: false
   become: true
 
 - name: 'Vector | Linux | Install | Dnf | Install package'
   ansible.builtin.dnf:
-    name: 'vector-{{ vector_version}}-1'
+    name: 'vector-{{ vector_version }}-1'
     state: 'present'
     allow_downgrade: true
     enablerepo:

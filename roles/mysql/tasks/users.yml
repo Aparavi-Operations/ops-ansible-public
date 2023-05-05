@@ -15,7 +15,7 @@
   register: mysql_root_check
 
 # Try to get and use temporary password if root wasn't set
-- name: MySQL | Get temporary root password from install log
+- name: MySQL | Get temporary root password from install log  # noqa risky-shell-pipe
   ansible.builtin.shell: >
     set -e &&
     cat {{ mysql_log_error }} | grep 'temporary password'
@@ -28,7 +28,7 @@
 # RedHat installs are using temporary passwor
 # This password needs to be changed as expired
 - name: MySQL | Set root password with credentials
-  ansible.builtin.shell: >
+  ansible.builtin.command: >
     mysql -u root -h localhost -p'{{ tmp_root_password.stdout }}' -e
     'ALTER USER `root`@`localhost` IDENTIFIED BY "{{ mysql_root_password }}";'
     -v --connect-expired-password

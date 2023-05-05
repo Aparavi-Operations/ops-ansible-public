@@ -3,7 +3,14 @@
 go_arch_map:
   x86_64: 'amd64'
 
-prometheus_samba_exporter_arch: '{{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}'
+prometheus_samba_exporter_arch: >-
+  {{ go_arch_map[ansible_architecture] | default(ansible_architecture) }}
 prometheus_samba_exporter_target_os: 'ubuntu20.04'
-prometheus_samba_exporter_url: 'https://github.com/imker25/samba_exporter/releases/download/{{ prometheus_samba_exporter_version }}/samba-exporter_{{ prometheus_samba_exporter_version }}.ppa1.{{ prometheus_samba_exporter_target_os }}_{{ prometheus_samba_exporter_arch }}.deb'
-prometheus_samba_exporter_download_path: '/tmp/{{ base_url | urlsplit("path") | basename }}'
+prometheus_samba_exporter_url: >-
+  https://github.com/imker25/samba_exporter/releases/download/{{
+  prometheus_samba_exporter_version }}/samba-exporter_{{
+  prometheus_samba_exporter_version }}.ppa1.{{
+  prometheus_samba_exporter_target_os }}_{{
+  prometheus_samba_exporter_arch }}.deb
+prometheus_samba_exporter_download_path: >-
+  /tmp/{{ base_url | urlsplit("path") | basename }}

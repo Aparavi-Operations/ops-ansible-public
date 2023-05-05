@@ -1,12 +1,7 @@
 ---
 
-- name: 'reload systemd configuration'
-  systemd:
-    daemon_reload: true
-  become: true
-
-- name: 'restart node_exporter'
-  systemd:
+- name: 'Prometheus nodejs | Restart node_exporter'
+  ansible.builtin.systemd:
     daemon_reload: true
     name: 'node_exporter'
     state: 'restarted'
@@ -15,8 +10,8 @@
     - 'ansible_service_mgr == "systemd"'
   become: true
 
-- name: 'restart node_exporter (init.d)'
-  service:
+- name: 'Prometheus nodejs | Restart node_exporter (init.d)'
+  ansible.builtin.service:
     name: 'node_exporter'
     state: 'restarted'
   when:
@@ -24,8 +19,8 @@
     - 'ansible_service_mgr != "systemd"'
   become: true
 
-- name: 'reload consul config'
-  systemd:
+- name: 'Prometheus nodejs | Reload consul config'
+  ansible.builtin.systemd:
     name: 'consul'
     state: 'reloaded'
   when: "'packer' not in group_names"

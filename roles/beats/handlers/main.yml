@@ -2,7 +2,7 @@
 
 - name: 'Restart Linux service'
   become: true
-  service:
+  ansible.builtin.service:
     name: '{{ beat_product }}'
     state: 'restarted'
     enabled: true

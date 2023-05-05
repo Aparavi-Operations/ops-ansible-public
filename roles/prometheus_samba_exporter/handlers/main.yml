@@ -1,20 +1,15 @@
 ---
 
-- name: 'reload systemd configuration'
-  systemd:
-    daemon_reload: true
-  become: true
-
-- name: 'restart Samba exporter'
-  systemd:
+- name: 'Prometheus Samba | Restart Samba exporter'
+  ansible.builtin.systemd:
     daemon_reload: true
     name: '{{ prometheus_samba_exporter_service_name }}'
     state: 'restarted'
   when: 'prometheus_samba_exporter_service_state != "stopped"'
   become: true
 
-- name: 'reload consul config'
-  systemd:
+- name: 'Prometheus Samba | Reload consul config'
+  ansible.builtin.systemd:
     name: 'consul'
     state: 'reloaded'
   when: "'packer' not in group_names"

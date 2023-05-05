@@ -1,21 +1,28 @@
 ---
 
-- name: 'Windows | Create temp dir'
+- name: 'Prometheus mysql | Windows | Create temp dir'
   ansible.windows.win_tempfile:
     state: 'directory'
   register: 'temp'
 
-- block:
-    - name: 'Find aparavi config file'
+- name: Prometheus mysql | Windows | Use credentials from config file
+  when: 'mysql_get_creds_from_aparavi_config | bool'
+  block:
+
+    - name: Prometheus mysql | Windows | Find aparavi config file
       ansible.windows.win_find:
         paths: 'C:\ProgramData\aparavi-data-ia'
         patterns: ['config.json']
         recurse: true
       register: 'result'
 
-    - block:
+    - name: Prometheus mysql | Windows | Process aparavi config file
+      when: '(result.files | default([])) | length == 1'
+      block:
+
         - name: 'Dump aparavi config'
-          ansible.windows.win_command: 'cmd.exe /c type "{{ result.files[0].path }}"'
+          ansible.windows.win_command: >-
+            cmd.exe /c type "{{ result.files[0].path }}"
           register: '__config'
 
         - name: 'Get database info aparavi config'
@@ -28,47 +35,43 @@
             __mysql_password: '{{ __database.password }}'
             __mysql_port: '{{ __database.port }}'
             __mysql_username: '{{ __database.user }}'
-      when: '(result.files | default([])) | length == 1'
 
-  when: 'mysql_get_creds_from_aparavi_config | bool'
+- name: Prometheus mysql | Windows | Setup tls configuration
+  when: 'prometheus_mysqld_exporter_tls | bool'
+  tags: 'ssl'
+  block:
 
-# Generate cert
-- block:
-
-    - name: 'Windows | Create config dir'
-      ansible.builtin.win_file:
+    - name: 'Prometheus mysql | Windows | Create config dir'
+      ansible.windows.win_file:
         path: '{{ prometheus_mysqld_exporter_config_dir }}'
         state: 'directory'
-        owner: 'root'
-        group: '{{ prometheus_mysqld_exporter_system_group }}'
-        mode: 0750
 
-    - name: 'Windows | Deploy web_config.yml'
-      ansible.builtin.win_template:
+    - name: 'Prometheus mysql | Windows | Deploy web_config.yml'
+      ansible.windows.win_template:
         src: 'web_config.yml.j2'
         dest: '{{ prometheus_mysqld_exporter_config_dir }}\web_config.yml'
-        owner: 'root'
-        group: '{{ prometheus_mysqld_exporter_system_group }}'
-        mode: 0640
       notify:
-        - 'restart win mysqld exporter'
+        - 'Prometheus mysql | Linux | Restart win mysqld exporter'
 
-    - block:
-        - name: 'Windows | Generate a Self Signed key'
+    - name: Prometheus mysql | Windows | Generate certificates
+      when: 'prometheus_mysqld_exporter_tls_cert | length == 0'
+      block:
+
+        - name: 'Prometheus mysql | Windows | Generate a Self Signed key'
           community.crypto.openssl_privatekey:
             path: '/tmp/cert.key'
             return_content: true
           register: '__result'
           delegate_to: 'localhost'
 
-        - name: 'Windows | Copy Self Signed key'
+        - name: 'Prometheus mysql | Windows | Copy Self Signed key'
           ansible.windows.win_copy:
             dest: '{{ prometheus_mysqld_exporter_config_dir }}/cert.key'
             content: '{{ __result.privatekey }}'
           notify:
-            - 'restart win mysqld exporter'
+            - 'Prometheus mysql | Linux | Restart win mysqld exporter'
 
-        - name: 'Windows | Generate self signed cert'
+        - name: 'Prometheus mysql | Windows | Generate self signed cert'
           community.crypto.x509_certificate:
             path: '/tmp/cert.crt'
             privatekey_path: '/tmp/cert.key'
@@ -78,91 +81,103 @@
           register: '__result'
           delegate_to: 'localhost'
 
-        - name: 'Windows | Copy Self signed cert'
+        - name: 'Prometheus mysql | Windows | Copy Self signed cert'
           ansible.windows.win_copy:
             dest: '{{ prometheus_mysqld_exporter_config_dir }}/cert.crt'
             content: '{{ __result.certificate }}'
           notify:
-            - 'restart win mysqld exporter'
-
-      when: 'prometheus_mysqld_exporter_tls_cert | length == 0'
-
-  when: 'prometheus_mysqld_exporter_tls | bool'
-  tags: 'ssl'
+            - 'Prometheus mysql | Linux | Restart win mysqld exporter'
 
 # Download required files
-- name: 'Windows | Download installation file'
+- name: 'Prometheus mysql | Windows | Download installation file'
   ansible.windows.win_get_url:
-    url: 'https://github.com/prometheus/mysqld_exporter/releases/download/v{{ prometheus_mysqld_exporter_version }}/mysqld_exporter-{{ prometheus_mysqld_exporter_version }}.windows-amd64.zip'
+    url: "https://github.com/prometheus/mysqld_exporter/releases/download/v\
+          {{ prometheus_mysqld_exporter_version }}/mysqld_exporter-\
+          {{ prometheus_mysqld_exporter_version }}.windows-amd64.zip"
     dest: '{{ temp.path }}'
   register: 'download_installation'
   changed_when: false
 
-- name: 'Windows | Download nssm'
+- name: 'Prometheus mysql | Windows | Download nssm'
   ansible.windows.win_get_url:
-    url: 'https://nssm.cc/ci/nssm-{{ prometheus_mysqld_exporter_nssm_version }}.zip'
+    url: >-
+      https://nssm.cc/ci/nssm-{{ prometheus_mysqld_exporter_nssm_version }}.zip
     dest: '{{ temp.path }}'
   register: 'download_nssm'
   changed_when: false
 
 # Stop service ignoring errors (if service isn't exists)
-- name: 'Windows | Stop exporter'
+- name: 'Prometheus mysql | Windows | Stop exporter'
   ansible.windows.win_service:
     name: '{{ prometheus_mysqld_exporter_win_service_name }}'
     state: 'stopped'
   failed_when: false
 
 # Install files
-- name: 'Windows | Unarchive installation file'
+- name: 'Prometheus mysql | Windows | Unarchive installation file'
   community.windows.win_unzip:
     src: '{{ download_installation.dest }}'
     dest: '{{ ansible_env.ProgramFiles }}'
     delete_archive: true
   register: 'unarchived_exporter'
 
-- name: 'Windows | Unarchive nssm'
+- name: 'Prometheus mysql | Windows | Unarchive nssm'
   community.windows.win_unzip:
     src: '{{ download_nssm.dest }}'
     dest: '{{ temp.path }}'
     delete_archive: true
   register: 'unarchived_nssm'
 
-- name: 'Windows | Copy nssm'
+- name: 'Prometheus mysql | Windows | Copy nssm'
   ansible.windows.win_copy:
     remote_src: true
-    src: '{{ temp.path }}\nssm-{{ prometheus_mysqld_exporter_nssm_version }}\win64\nssm.exe'
-    dest: '{{ ansible_env.ProgramFiles }}\mysqld_exporter-{{ prometheus_mysqld_exporter_version }}.windows-amd64'
+    src: >-
+      {{ temp.path }}\nssm-{{ prometheus_mysqld_exporter_nssm_version }}
+      \win64\nssm.exe
+    dest: >-
+      {{ ansible_env.ProgramFiles }}\mysqld_exporter-
+      {{ prometheus_mysqld_exporter_version }}.windows-amd64
 
-- name: 'Windows | Register service'
+- name: 'Prometheus mysql | Windows | Register service'
   community.windows.win_nssm:
     name: '{{ prometheus_mysqld_exporter_win_service_name }}'
     display_name: 'Prometheus MySQLd exporter'
-    executable: '{{ ansible_env.ProgramFiles }}\mysqld_exporter-{{ prometheus_mysqld_exporter_version }}.windows-amd64\nssm.exe'
-    application: '{{ ansible_env.ProgramFiles }}\mysqld_exporter-{{ prometheus_mysqld_exporter_version }}.windows-amd64\mysqld_exporter.exe'
-    arguments: >-
-      --web.listen-address={{ prometheus_mysqld_exporter_listen_address }}:{{ prometheus_mysqld_exporter_listen_port }}
-      --web.config.file={{ prometheus_mysqld_exporter_config_dir }}/web_config.yml
+    executable: "{{ ansible_env.ProgramFiles }}\\mysqld_exporter-\
+                 {{ prometheus_mysqld_exporter_version }}.windows-amd64\
+                 \\nssm.exe"
+    application: "{{ ansible_env.ProgramFiles }}\\mysqld_exporter-\
+                  {{ prometheus_mysqld_exporter_version }}.windows-amd64\
+                  \\mysqld_exporter.exe"
+    arguments: "--web.listen-address=\
+                {{ prometheus_mysqld_exporter_listen_address }}:\
+                {{ prometheus_mysqld_exporter_listen_port }} \
+                --web.config.file=\
+                {{ prometheus_mysqld_exporter_config_dir }}/web_config.yml"
     app_environment:
-      DATA_SOURCE_NAME: '{{ __mysql_username }}:{{ __mysql_password | replace("%", "%%") }}@({{ __mysql_hostname }}:{{ __mysql_port }})/'
+      DATA_SOURCE_NAME: >-
+        {{ __mysql_username }}:{{ __mysql_password |
+        replace("%", "%%") }}@({{ __mysql_hostname }}:{{ __mysql_port }})/
 
-- name: 'Windows | Clean'
-  ansible.builtin.win_file:
+- name: 'Prometheus mysql | Windows | Clean'
+  ansible.windows.win_file:
     path: '{{ temp.path }}'
     state: 'absent'
 
-- name: 'Windows | Set service state'
+- name: 'Prometheus mysql | Windows | Set service state'
   ansible.windows.win_service:
     name: '{{ prometheus_mysqld_exporter_win_service_name }}'
     start_mode: 'auto'
     state: 'started'
 
-- name: 'Windows | Define firewall rule'
+- name: 'Prometheus mysql | Windows | Define firewall rule'
   community.windows.win_firewall_rule:
     name: 'Prometheus MySQLd exporter'
     enabled: true
     action: 'allow'
     state: 'present'
-    program: '{{ ansible_env.ProgramFiles }}\mysqld_exporter-{{ prometheus_mysqld_exporter_version }}.windows-amd64\mysqld_exporter.exe'
+    program: >-
+      {{ ansible_env.ProgramFiles }}\mysqld_exporter-{{
+      prometheus_mysqld_exporter_version }}.windows-amd64\mysqld_exporter.exe
     port: '{{ prometheus_mysqld_exporter_listen_port }}'
     protocol: 'tcp'
     direction: 'in'

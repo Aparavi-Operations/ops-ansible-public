@@ -3,7 +3,7 @@
 - name: 'Docker | Apt | Install dependencies'
   ansible.builtin.apt:
     name: '{{ dependencies }}'
-    state: 'latest'
+    state: 'present'
     force_apt_get: true
     update_cache: true
 

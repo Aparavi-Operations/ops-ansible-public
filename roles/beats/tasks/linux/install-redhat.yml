@@ -2,14 +2,17 @@
 
 - name: Redhat - add beats repository
   become: true
-  template:
+  ansible.builtin.template:
     src: beats.repo.j2
     dest: /etc/yum.repos.d/beats.repo
+    mode: '0644'
+    owner: root
+    group: root
   when: beat_add_repository | bool
 
 - name: RedHat - install yum-version-lock
   become: true
-  yum:
+  ansible.builtin.yum:
     name: yum-plugin-versionlock
     state: present
     update_cache: true
@@ -19,7 +22,7 @@
 
 - name: RedHat - unlock {{ beat }} for install
   become: true
-  shell: yum versionlock delete {{ beat }} || true
+  ansible.builtin.shell: yum versionlock delete {{ beat }} || true
   changed_when: false
   when: beat_version_lock | bool
   tags:
@@ -27,9 +30,11 @@
 
 - name: RedHat - Ensure {{ beat }} is installed
   become: true
-  yum:
+  ansible.builtin.yum:
     name: >-
-      {{ beat }}{% if beat_version is defined and beat_version|length %}-{{ beat_version }}{% endif %}
+      {{ beat }}{% if beat_version is defined and
+      beat_version | length > 0 %}-{{ beat_version }}
+      {% endif %}
     state: present
     update_cache: true
   register: beat_install
@@ -39,9 +44,11 @@
 
 - name: RedHat - lock {{ beat }} version
   become: true
-  shell: >-
+  ansible.builtin.shell: >-
     yum versionlock add
-    {{ beat }}{% if beat_version is defined and beat_version|length %}-{{ beat_version }}{% endif %}
+    {{ beat }}{% if beat_version is defined and
+    beat_version | length > 0 %}-{{ beat_version }}
+    {% endif %}
   when: beat_version_lock | bool
   changed_when: false
   tags:
@@ -49,10 +56,13 @@
 
 - name: RedHat - Install {{ beat }} from url
   become: true
-  yum:
+  ansible.builtin.yum:
     name: >-
-      {% if custom_package_url is defined %}{{ custom_package_url }}{%
-        else %}{{ beats_package_url }}/{{ beat }}-{{ beat_version }}-{{ ansible_architecture }}.rpm{% endif %}
+      {% if custom_package_url is defined %}{{ custom_package_url }}
+      {% else %}
+      {{ beats_package_url }}/{{ beat }}-{{ beat_version }}-{{
+        ansible_architecture }}.rpm
+      {% endif %}
     state: present
   register: beat_install
   until: beat_install is succeeded

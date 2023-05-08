@@ -1,7 +1,7 @@
 ---
 
-- name: 'restart atop'
+- name: 'Atop | restart atop'
   become: true
-  service:
+  ansible.builtin.service:
     name: 'atop'
     state: 'restarted'

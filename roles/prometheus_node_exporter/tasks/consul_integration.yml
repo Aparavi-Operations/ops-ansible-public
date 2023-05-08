@@ -1,18 +1,18 @@
 ---
 
-- name: 'Consul integration | Get service facts'
-  service_facts:
+- name: 'Prometheus nodejs | Consul integration | Get service facts'
+  ansible.builtin.service_facts:
   become: true
 
-- name: 'Consul integration | Add node-exporter consul service file'
-  copy:
+- name: 'Prometheus nodejs | Consul integration | Add node-exporter consul hcl'
+  ansible.builtin.copy:
     src: 'files/node-exporter.hcl'
     dest: '/etc/consul.d/node-exporter.hcl'
     owner: '{{ node_exporter_consul_user }}'
     group: '{{ node_exporter_consul_group }}'
-    mode: 0400
+    mode: '0400'
   become: true
   notify:
-    - 'reload consul config'
+    - 'Prometheus nodejs | Reload consul config'
   when:
     - 'ansible_facts.services["consul.service"] is defined'

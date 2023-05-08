@@ -1,19 +1,20 @@
 ---
 
-# Workaround to possibly override vars like 'mysql_hostname' with aparavi config disovery
+# Workaround to possibly override vars like 'mysql_hostname'
+# with aparavi config disovery
 # https://stackoverflow.com/questions/27038553/ansible-set-fact-doesnt-change-the-variable-value
-- name: 'Set proxy variables - required for auto discovery to be able override them'
-  set_fact:
+- name: 'Prometheus mysql | Set proxy variables - required for autodiscovery'
+  ansible.builtin.set_fact:
     __mysql_hostname: '{{ mysql_hostname }}'
     __mysql_username: '{{ mysql_username }}'
     __mysql_password: '{{ mysql_password }}'
     __mysql_port: '{{ mysql_port }}'
 
-- name: 'Linux installation'
+- name: 'Prometheus mysql | Linux installation'
   ansible.builtin.import_tasks: 'linux.yml'
   when: 'ansible_os_family != "Windows"'
   become: true
 
-- name: 'Windows installation'
+- name: 'Prometheus mysql | Windows installation'
   ansible.builtin.import_tasks: 'windows.yml'
   when: 'ansible_os_family == "Windows"'

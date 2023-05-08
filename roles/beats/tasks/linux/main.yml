@@ -1,21 +1,21 @@
 ---
 
 - name: 'Linux | Configure'
-  include_tasks: 'configure.yml'
+  ansible.builtin.include_tasks: 'configure.yml'
   tags: 'configure'
 
 - name: 'Linux | Install | Debian'
-  include_tasks: 'install-debian.yml'
+  ansible.builtin.include_tasks: 'install-debian.yml'
   when: 'ansible_os_family == "Debian"'
   tags: 'install'
 
 - name: 'Linux | Install | Redhat'
-  include_tasks: install-redhat.yml
+  ansible.builtin.include_tasks: install-redhat.yml
   when: 'ansible_os_family == "RedHat"'
   tags: 'install'
 
 - name: 'Linux | Set {{ beat_product }} service to {{ beat_start_service | ternary("started", "stopped") }}'
-  service:
+  ansible.builtin.service:
     name: '{{ beat }}'
     state: '{{ beat_start_service | ternary("started", "stopped") }}'
     enabled: '{{ beat_start_service }}'

@@ -1,18 +1,18 @@
 ---
 
-- name: 'Install | Install dependencies'
-  package:
+- name: 'Prometheus nodejs | Install | Install dependencies'
+  ansible.builtin.package:
     name: '{{ node_exporter_custom.dependencies }}'
     state: 'present'
 
-- name: 'Install | Create the node_exporter group'
-  group:
+- name: 'Prometheus nodejs | Install | Create the node_exporter group'
+  ansible.builtin.group:
     name: '{{ node_exporter_system_group }}'
     state: 'present'
     system: true
 
-- name: 'Install | Create the node_exporter user'
-  user:
+- name: 'Prometheus nodejs | Install | Create the node_exporter user'
+  ansible.builtin.user:
     name: '{{ node_exporter_system_user }}'
     groups: '{{ node_exporter_system_group }}'
     append: true
@@ -20,80 +20,87 @@
     system: true
     createhome: false
 
-- name: 'Check installation'
-  stat:
+- name: 'Prometheus nodejs | Install | Check installation'
+  ansible.builtin.stat:
     path: '/usr/local/bin/node_exporter'
   register: '_installation'
 
-- name: 'Installation block'
+- name: 'Prometheus nodejs | Installation block'
+  check_mode: false
+  when: 'not _installation.stat.exists or node_exporter_force_install'
   block:
 
-    - name: 'Create temporary directory'
-      tempfile:
+    - name: 'Prometheus nodejs | Install | Create temporary directory'
+      ansible.builtin.tempfile:
         state: 'directory'
       check_mode: false
       register: '_tmp_dir'
 
-    - name: 'Install | Download node_exporter binary to local folder'
-      get_url:
+    - name: 'Prometheus nodejs | Install | Download node_exporter binary'
+      ansible.builtin.get_url:
         url: '{{ node_exporter_tar_url }}'
-        dest: '{{ _tmp_dir.path }}/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}.tar.gz'
+        dest: >-
+          {{ _tmp_dir.path }}/node_exporter-{{ node_exporter_version }}.linux-{{
+            node_exporter_arch }}.tar.gz
+        mode: '0666'
+        owner: root
+        group: root
       register: '_download_binary'
       until: '_download_binary is succeeded'
       retries: 5
       delay: 2
 
-    - name: 'Install | Unpack node_exporter binary'
-      unarchive:
-        src: '{{ _tmp_dir.path }}/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}.tar.gz'
+    - name: 'Prometheus nodejs | Install | Unpack node_exporter binary'
+      ansible.builtin.unarchive:
+        src: >-
+          {{ _tmp_dir.path }}/node_exporter-{{ node_exporter_version }}.linux-{{
+            node_exporter_arch }}.tar.gz
         dest: '{{ _tmp_dir.path }}'
         remote_src: true
 
-    - name: 'Install | Propagate node_exporter binaries'
-      copy:
-        src: '{{ _tmp_dir.path }}/node_exporter-{{ node_exporter_version }}.linux-{{ node_exporter_arch }}/node_exporter'
+    - name: 'Prometheus nodejs | Install | Propagate node_exporter binaries'
+      ansible.builtin.copy:
+        src: >-
+          {{ _tmp_dir.path }}/node_exporter-{{ node_exporter_version }}.linux-{{
+            node_exporter_arch }}/node_exporter
         dest: '/usr/local/bin/node_exporter'
-        mode: 0750
+        mode: '0750'
         owner: '{{ node_exporter_system_user }}'
         group: '{{ node_exporter_system_group }}'
         remote_src: true
-      notify: 'restart node_exporter'
+      notify: 'Prometheus nodejs | Restart node_exporter'
 
   always:
 
-    - name: 'Remove Temp dir'
-      file:
+    - name: 'Prometheus nodejs | Install | Remove Temp dir'
+      ansible.builtin.file:
         path: '{{ _tmp_dir.path }}'
         state: 'absent'
 
-  check_mode: false
-  when: 'not _installation.stat.exists or node_exporter_force_install'
-
-- name: 'Install | Copy the Node Exporter systemd service file'
-  template:
+- name: 'Prometheus nodejs | Install | Copy the Node Exporter systemd service'
+  ansible.builtin.template:
     src: 'node_exporter.service.j2'
     dest: '/etc/systemd/system/node_exporter.service'
     owner: 'root'
     group: 'root'
-    mode: 0644
+    mode: '0644'
   notify:
-    - 'reload systemd configuration'
-    - 'restart node_exporter'
+    - 'Prometheus nodejs | Restart node_exporter'
   when: 'ansible_service_mgr == "systemd"'
 
-- name: 'Install | Copy the Node Exporter init.d service file'
-  template:
+- name: 'Prometheus nodejs | Install | Copy the Node Exporter init.d script'
+  ansible.builtin.template:
     src: 'node_exporter.j2'
     dest: '/etc/init.d/node_exporter'
     owner: 'root'
     group: 'root'
-    mode: 0750
+    mode: '0750'
   notify:
-    - 'restart node_exporter (init.d)'
+    - 'Prometheus nodejs | Restart node_exporter (init.d)'
   when: 'ansible_service_mgr != "systemd"'
 
-- name: 'Install | Allow Node Exporter port in SELinux on RedHat OS family'
-  seport:
+- name: 'Prometheus nodejs | Install | Allow Node Exporter port in SELinux'
+  community.general.seport:
     ports: '{{ node_exporter_web_listen_port }}'
     proto: 'tcp'
     setype: 'http_port_t'

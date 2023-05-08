@@ -25,12 +25,14 @@ jobs:
           failed_roles=""
           for dir in ./roles/*; do
             echo "=== Running linter in ${dir} ==="
-            ansible-lint $dir && excode=$? || excode=$?
+            pushd $dir
+            ansible-lint . && excode=$? || excode=$?
             if [ "${excode}" != "0" ]; then
               nofail=1
               failed_roles="${failed_roles}\n${dir}"
               echo "=== !!! found errors for ${dir} !!! ==="
             fi
+            popd
             echo -e "=== ${dir} done ===\n\n"
           done
           if [ "${nofail}" != "0" ]; then

@@ -11,7 +11,9 @@
 
 - name: 'Vector | Linux | Install | Apt | Add repository'
   ansible.builtin.apt_repository:
-    repo: 'deb https://repositories.timber.io/public/vector/deb/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main'
+    repo: >-
+      deb https://repositories.timber.io/public/vector/deb/{{
+      ansible_distribution | lower }} {{ ansible_distribution_release }} main
     filename: 'timber-vector'
     state: 'present'
     update_cache: true
@@ -22,7 +24,7 @@
 
 - name: 'Vector | Linux | Install | Apt | Install package'
   ansible.builtin.apt:
-    name: 'vector={{ vector_version}}-1'
+    name: 'vector={{ vector_version }}-1'
     state: 'present'
     allow_downgrade: true
   register: '_result'

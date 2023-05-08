@@ -5,7 +5,7 @@
     app_installer_opts: >-
       {{ app_installer_opts | default("") }}
       /cfg.{{ item.path }}='{{ item.value }}'
-  # no_log: true
+  no_log: true
   loop: '{{ app_config_updates[app_type] }}'
 
 - name: Aparavi App | Load a variable file based on the OS type
@@ -49,14 +49,6 @@
   tags:
     - aparavi_app
 
-- name: Debug
-  ansible.builtin.debug:
-    msg: >
-      ./linux-installer-latest.run --
-      /APPTYPE={{ app_type }}
-      {{ app_installer_opts }}
-      /SILENT
-
 - name: Aparavi App | Install App
   ansible.builtin.command:
     cmd: >
@@ -84,13 +76,14 @@
     - name: Aparavi App | Set fact with config
       ansible.builtin.set_fact:
         app_config: "{{ app_config_raw['content'] | b64decode | from_json }}"
+      no_log: true
       tags:
         - aparavi_app
 
     - name: Build a list of updates
       ansible.builtin.set_fact:
         update_list: "{{ update_list + update }}"
-      # no_log: true
+      no_log: true
       loop: "{{ app_config_updates[app_type] }}"
       vars:
         update_list: []

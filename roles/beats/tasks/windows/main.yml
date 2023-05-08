@@ -1,11 +1,11 @@
 ---
 
 - name: 'Windows | Install'
-  include_tasks: 'install.yml'
+  ansible.builtin.include_tasks: 'install.yml'
   tags: 'install'
 
 - name: 'Windows | Configure'
-  include_tasks: 'configure.yml'
+  ansible.builtin.include_tasks: 'configure.yml'
   tags: 'configure'
 
 - name: 'Windows | Set service state'

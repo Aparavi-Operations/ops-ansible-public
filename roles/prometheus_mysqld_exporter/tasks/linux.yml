@@ -1,41 +1,43 @@
 ---
 
-- block:
-    - name: 'Find aparavi config file'
+- name: 'Prometheus mysql | Linux | Use credentials from config file'
+  when: 'mysql_get_creds_from_aparavi_config | bool'
+  block:
+
+    - name: 'Prometheus mysql | Linux | Find aparavi config file'
       ansible.builtin.find:
         paths: '/etc/opt/aparavi-data-ia'
         patterns: ['config.json']
         recurse: true
       register: '__config_files'
 
-    - block:
+    - name: 'Prometheus mysql | Linux | Parse aparavi config file'
+      when: '(__config_files.files | default([])) | length == 1'
+      block:
         - name: 'Dump aparavi config'
           ansible.builtin.slurp:
             src: '{{ __config_files.files[0].path }}'
           register: '__config_file'
 
-        - name: 'Get database info from aparavi config'
-          set_fact:
-            __database: '{{ (__config_file.content | b64decode | from_json).database }}'
+        - name: Prometheus mysql | Linux | Get database info from aparavi config
+          ansible.builtin.set_fact:
+            __database: >-
+              {{ (__config_file.content | b64decode | from_json).database }}
 
-        - name: 'Get mysql connection info from config file'
-          set_fact:
+        - name: Prometheus mysql | Linux | Get mysql connection info from config
+          ansible.builtin.set_fact:
             __mysql_hostname: '{{ __database.host }}'
             __mysql_username: '{{ __database.user }}'
             __mysql_password: '{{ __database.password }}'
             __mysql_port: '{{ __database.port }}'
 
-      when: '(__config_files.files | default([])) | length == 1'
-
-  when: 'mysql_get_creds_from_aparavi_config | bool'
-
-- name: 'Linux | Create mySQLd exporter group'
+- name: 'Prometheus mysql | Linux | Create mySQLd exporter group'
   ansible.builtin.group:
     name: '{{ prometheus_mysqld_exporter_system_group }}'
     state: 'present'
     system: true
 
-- name: 'Linux | Create mySQLd exporter user'
+- name: 'Prometheus mysql | Linux | Create mySQLd exporter user'
   ansible.builtin.user:
     name: '{{ prometheus_mysqld_exporter_system_user }}'
     groups: '{{ prometheus_mysqld_exporter_system_group }}'
@@ -44,57 +46,63 @@
     system: true
     createhome: false
 
-- block:
+- name: 'Prometheus mysql | Linux | Get mySQLd exporter checksum'
+  when: 'ansible_version.full is version("2.7", "<")'
+  block:
 
-    - name: 'Linux | Get checksum list from GitHub'
+    - name: 'Prometheus mysql | Linux | Get checksum list from GitHub'
       ansible.builtin.set_fact:
-        _checksums: '{{ lookup("url", prometheus_mysqld_exporter_sha_url, wantlist=True) | list }}'
+        _checksums: >-
+          {{ lookup("url", prometheus_mysqld_exporter_sha_url, wantlist=True) |
+          list }}
       run_once: true
 
-    - name: 'Linux | Get checksum for {{ prometheus_mysqld_exporter_arch }} architecture'
+    - name: 'Prometheus mysql | Linux | Get checksum for proper architecture'
       ansible.builtin.set_fact:
         prometheus_mysqld_exporter_checksum: '{{ item.split(" ")[0] }}'
       loop: '{{ _checksums }}'
       when: '("linux-" + prometheus_mysqld_exporter_arch + ".tar.gz") in item'
-  when: 'ansible_version.full is version("2.7", "<")'
 
-- name: 'Linux | Get checksum for {{ prometheus_mysqld_exporter_arch }} architecture'
+- name: 'Prometheus mysql | Linux | Get checksum for proper architecture'
   ansible.builtin.set_fact:
-    prometheus_mysqld_exporter_checksum: '{{ prometheus_mysqld_exporter_sha_url }}'
+    prometheus_mysqld_exporter_checksum: >-
+      {{ prometheus_mysqld_exporter_sha_url }}
   when: 'ansible_version.full is version("2.7", ">=")'
 
-- block:
+- name: 'Prometheus mysql | Linux | Install mySQLd exporter binary'
+  delegate_to: 'localhost'
+  check_mode: false
+  run_once: true
+  become: false
+  tags: 'install'
+  block:
 
-    - name: 'Linux | Download mySQLd Exporter binary'
+    - name: 'Prometheus mysql | Linux | Download mySQLd Exporter binary'
       ansible.builtin.get_url:
         url: '{{ prometheus_mysqld_exporter_tar_url }}'
         dest: '{{ prometheus_mysqld_exporter_tar_file }}'
         checksum: 'sha256:{{ prometheus_mysqld_exporter_checksum }}'
+        mode: '0644'
+        owner: root
+        group: root
       register: '_download_binary'
       until: '_download_binary is succeeded'
       retries: 5
       delay: 2
       notify:
-        - 'restart mysqld exporter'
+        - 'Prometheus mysql | Linux | Restart mysqld exporter'
 
-    - name: 'Linux | Unpack mySQLd Exporter binary'
+    - name: 'Prometheus mysql | Linux | Unpack mySQLd Exporter binary'
       ansible.builtin.unarchive:
         src: '{{ prometheus_mysqld_exporter_tar_file }}'
         dest: '/tmp'
         creates: '{{ prometheus_mysqld_exporter_install_dir }}/mysqld_exporter'
 
-  delegate_to: 'localhost'
-  check_mode: false
-  run_once: true
-  become: false
-  tags:
-    - 'install'
-
-- name: 'Linux | Propagate mySQLd Exporter binaries'
+- name: 'Prometheus mysql | Linux | Propagate mySQLd Exporter binaries'
   ansible.builtin.copy:
     src: '{{ prometheus_mysqld_exporter_install_dir }}/mysqld_exporter'
     dest: '/usr/local/bin/mysqld_exporter'
-    mode: 0750
+    mode: '0750'
     owner: '{{ prometheus_mysqld_exporter_system_user }}'
     group: '{{ prometheus_mysqld_exporter_system_group }}'
   notify: 'restart mysqld exporter'
@@ -102,38 +110,42 @@
   tags:
     - 'install'
 
-- name: 'Linux | Copy the mySQLd exporter systemd service file'
+- name: 'Prometheus mysql | Linux | Copy the mySQLd exporter systemd service'
   ansible.builtin.template:
     src: 'service.j2'
-    dest: '/etc/systemd/system/{{ prometheus_mysqld_exporter_service_name }}.service'
+    dest: >-
+      /etc/systemd/system/{{ prometheus_mysqld_exporter_service_name }}.service
     owner: 'root'
     group: 'root'
-    mode: 0644
+    mode: '0644'
   notify:
-    - 'reload systemd configuration'
-    - 'restart mysqld exporter'
+    - 'Prometheus mysql | Linux | Restart mysqld exporter'
 
-- name: 'Linux | Create config dir'
+- name: 'Prometheus mysql | Linux | Create config dir'
   ansible.builtin.file:
     path: '{{ prometheus_mysqld_exporter_config_dir }}'
     state: 'directory'
     owner: 'root'
     group: '{{ prometheus_mysqld_exporter_system_group }}'
-    mode: 0750
+    mode: '0750'
 
-- name: 'Linux | Deploy web_config.yml'
+- name: 'Prometheus mysql | Linux | Deploy web_config.yml'
   ansible.builtin.template:
     src: 'web_config.yml.j2'
     dest: '{{ prometheus_mysqld_exporter_config_dir }}/web_config.yml'
     owner: 'root'
     group: '{{ prometheus_mysqld_exporter_system_group }}'
-    mode: 0640
+    mode: '0640'
   notify:
-    - 'restart mysqld exporter'
+    - 'Prometheus mysql | Linux | Restart mysqld exporter'
 
-- block:
+- name: 'Prometheus mysql | Linux | Manage mySQLd TLS encryption'
+  when: 'prometheus_mysqld_exporter_tls | bool'
+  block:
 
-    - block:
+    - name: 'Prometheus mysql | Linux | Generate certificates'
+      when: 'prometheus_mysqld_exporter_tls_cert | length == 0'
+      block:
         - name: 'Linux | Generate a Self Signed CA key'
           community.crypto.openssl_privatekey:
             path: '/tmp/cert.key'
@@ -147,9 +159,9 @@
             content: '{{ __result.privatekey }}'
             owner: 'root'
             group: '{{ prometheus_mysqld_exporter_system_group }}'
-            mode: 0640
+            mode: '0640'
           notify:
-            - 'restart mysqld exporter'
+            - 'Prometheus mysql | Linux | Restart mysqld exporter'
 
         - name: 'Linux | Generate Self signed CA cert'
           community.crypto.x509_certificate:
@@ -167,13 +179,9 @@
             content: '{{ __result.certificate }}'
             owner: 'root'
             group: '{{ prometheus_mysqld_exporter_system_group }}'
-            mode: 0640
+            mode: '0640'
           notify:
-            - 'restart mysqld exporter'
-
-      when: 'prometheus_mysqld_exporter_tls_cert | length == 0'
-
-  when: 'prometheus_mysqld_exporter_tls | bool'
+            - 'Prometheus mysql | Linux | Restart mysqld exporter'
 
 - name: 'Check Prometheus mySQLd Exporter service status'
   ansible.builtin.systemd:

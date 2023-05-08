@@ -1,6 +1,6 @@
 ---
 
-name: Lint
+name: Pull request checks
 on:
   pull_request:
     branches:
@@ -12,7 +12,7 @@ on:
       - '**.yaml'
 
 jobs:
-  test:
+  pull-request-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -42,12 +42,14 @@ jobs:
           failed_roles=""
           for dir in ${ROLES}; do
             echo "=== Running linter in ${dir} ==="
-            ansible-lint $dir && excode=$? || excode=$?
+            pushd $dir
+            ansible-lint . && excode=$? || excode=$?
             if [ "${excode}" != "0" ]; then
               nofail=1
               failed_roles="${failed_roles}\n${dir}"
               echo "=== !!! found errors for ${dir} !!! ==="
             fi
+            popd
             echo -e "=== ${dir} done ===\n\n"
           done
           if [ "${nofail}" != "0" ]; then

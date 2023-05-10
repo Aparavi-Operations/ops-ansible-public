@@ -51,7 +51,7 @@
         src: 'web_config.yml.j2'
         dest: '{{ prometheus_mysqld_exporter_config_dir }}\web_config.yml'
       notify:
-        - 'Prometheus mysql | Linux | Restart win mysqld exporter'
+        - 'Prometheus mysql | Windows | Restart win mysqld exporter'
 
     - name: Prometheus mysql | Windows | Generate certificates
       when: 'prometheus_mysqld_exporter_tls_cert | length == 0'
@@ -69,7 +69,7 @@
             dest: '{{ prometheus_mysqld_exporter_config_dir }}/cert.key'
             content: '{{ __result.privatekey }}'
           notify:
-            - 'Prometheus mysql | Linux | Restart win mysqld exporter'
+            - 'Prometheus mysql | Windows | Restart win mysqld exporter'
 
         - name: 'Prometheus mysql | Windows | Generate self signed cert'
           community.crypto.x509_certificate:
@@ -86,7 +86,7 @@
             dest: '{{ prometheus_mysqld_exporter_config_dir }}/cert.crt'
             content: '{{ __result.certificate }}'
           notify:
-            - 'Prometheus mysql | Linux | Restart win mysqld exporter'
+            - 'Prometheus mysql | Windows | Restart win mysqld exporter'
 
 # Download required files
 - name: 'Prometheus mysql | Windows | Download installation file'

@@ -105,7 +105,7 @@
     mode: '0750'
     owner: '{{ prometheus_mysqld_exporter_system_user }}'
     group: '{{ prometheus_mysqld_exporter_system_group }}'
-  notify: 'restart mysqld exporter'
+  notify: 'Prometheus mysql | Linux | Restart mysqld exporter'
   when: 'not ansible_check_mode'
   tags:
     - 'install'

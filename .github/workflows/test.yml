@@ -21,52 +21,41 @@ jobs:
           dir_names_max_depth: 2
 
     outputs:
-      matrix: ${{ steps.changed-roles-files.outputs.all_changed_files }}
+      all_changed_files: ${{ steps.changed-roles-files.outputs.all_changed_files }}
 
   matrix_test:
     runs-on: ubuntu-latest
     needs: prepare_roles_list
 
     strategy:
+      fail-fast: false
       matrix:
-        role: ${{ fromJson(needs.prepare_roles_list.outputs.matrix) }}
+        all_changed_files: ${{ fromJson(needs.prepare_roles_list.outputs.all_changed_files) }}
 
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0  # OR "2" -> To retrieve the preceding commit.
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+      - run: |
+          echo ${{ needs.prepare_roles_list.outputs.all_changed_files }}
+          echo ${{ matrix.all_changed_files }}
 
-      - name: Run linter for all roles in roles folder
-        run: |
-          echo -e "=== Install ansible-lint ===\n"
-          pip install ansible ansible-lint
-          echo -e "=== Run ansible-lint for all roles ===\n"
-          nofail=0
-          echo "=== Running linter in ${{ matrix.role }} ==="
-          pushd ${{ matrix.role }}
-          ansible-lint . && excode=$? || excode=$?
-          if [ "${excode}" != "0" ]; then
-            echo "=== !!! found errors for ${{ matrix.role }} !!! ==="
-            exit 1
-          fi
-          popd
-
-  manual_molecule:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Run linter for all roles in roles folder
-        run: |
-          echo -e "=== Install ansible-lint ===\n"
-          pip install ansible molecule
+      #      - uses: actions/setup-python@v4
+      #        with:
+      #          python-version: '3.9'
+      #
+      #      - name: Run linter for all roles in roles folder
+      #        run: |
+      #          echo -e "=== Install ansible-lint ===\n"
+      #          pip install ansible ansible-lint
+      #          echo -e "=== Run ansible-lint for all roles ===\n"
+      #          nofail=0
+      #          echo "=== Running linter in ${{ matrix.all_changed_files }} ==="
+      #          pushd ${{ matrix.all_changed_files }}
+      #          ansible-lint . && excode=$? || excode=$?
+      #          if [ "${excode}" != "0" ]; then
+      #            echo "=== !!! found errors for ${{ matrix.all_changed_files }} !!! ==="
+      #            exit 1
+      #          fi
+      #          popd

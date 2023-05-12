@@ -22,6 +22,10 @@ jobs:
           dir_names: true
           dir_names_max_depth: 2
 
+      - name: test
+        run: |
+          echo '${{ steps.changed-roles-files.outputs.all_changed_files }}'
+
     outputs:
       all_changed_files: ${{ steps.changed-roles-files.outputs.all_changed_files }}
 

@@ -10,9 +10,15 @@ galaxy_info:
   min_ansible_version: '2.13'
 
   platforms:
+    - name: 'EL'
+      versions:
+        - '8'
     - name: 'Debian'
       versions:
         - 'bullseye'
+    - name: 'Ubuntu'
+      versions:
+        - 'jammy'
 
   galaxy_tags: []
 

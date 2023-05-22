@@ -14,7 +14,7 @@ vmagent_base_url: '{{ vmagent_repo_url }}/releases/download/v{{ vmagent_version 
 vmagent_download_url: '{{ vmagent_base_url }}/vmutils-linux-amd64-v{{ vmagent_version }}.tar.gz'
 
 # Remote write
-vmagent_remote_write_url: ''  # Should be set externally
+vmagent_remote_write_url: ''  # Must be set externally
 vmagent_remote_write_tmp_dir: '/var/tmp/vmagent-remote-tmp'
 ## Interval for flushing the data to remote storage. This option takes effect only when less than 10K data points per second are pushed to -remoteWrite.url (default 1s)
 vmagent_remote_write_flush_interval: '10s'

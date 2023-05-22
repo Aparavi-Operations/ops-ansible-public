@@ -1,0 +1,18 @@
+---
+
+- name: 'VMagent | Preflight | Test «vmagent_remote_write_url»'
+  ansible.builtin.assert:
+    that: 'vmagent_remote_write_url | length > 10'
+    fail_msg: '«vmagent_remote_write_url» variable is not set or it''s value is not an URL'
+    success_msg: '«vmagent_remote_write_url» is set to «{{ vmagent_remote_write_url }}»'
+
+- name: 'VMagent | Preflight | Test «vmagent_service_options» is a dict'
+  ansible.builtin.assert:
+    that: '{{ vmagent_service_options is mapping }}'
+    fail_msg: '«vmagent_service_options» variable is not a dict'
+
+- name: 'VMagent | Preflight | Test «vmagent_config_dir»'
+  ansible.builtin.assert:
+    that: '{{ vmagent_config_dir | length > 1 }}'
+    fail_msg: '«vmagent_config_dir» is not set or it''s too short'
+    success_msg: '«vmagent_config_dir» set to «{{ vmagent_config_dir }}»'

@@ -1,0 +1,82 @@
+---
+
+- name: 'VMagent | Install | Create VMagent system group'
+  ansible.builtin.group:
+    name: '{{ vmagent_system_group }}'
+    state: present
+    system: true
+  when: 'vmagent_system_group != "root"'
+
+- name: 'VMagent | Install | Create VMagent system user'
+  ansible.builtin.user:
+    name: '{{ vmagent_system_user }}'
+    groups: '{{ vmagent_system_group }}'
+    append: true
+    shell: '/sbin/nologin'
+    system: true
+    createhome: false
+  when: 'vmagent_system_user != "root"'
+
+- name: 'VMagent | Install | Ensure existence of binaries directory'
+  ansible.builtin.file:
+    path: '/usr/local/bin/victoria-metrics-{{ vmagent_version }}'
+    state: 'directory'
+    owner: 'root'
+    group: '{{ vmagent_system_group }}'
+    mode: 0750
+
+- name: 'VMagent | Install | Ensure existence of remote write tmp directory'
+  ansible.builtin.file:
+    path: '{{ vmagent_remote_write_tmp_dir }}'
+    state: 'directory'
+    owner: 'root'
+    group: '{{ vmagent_system_group }}'
+    mode: 0750
+
+- name: 'VMagent | Install | Download VMagent'
+  ansible.builtin.unarchive:
+    src: '{{ vmagent_download_url }}'
+    dest: '{{ vmagent_bin_dir }}'
+    include:
+      - '{{ vmagent_executable }}'
+    owner: 'root'
+    group: '{{ vmagent_system_group }}'
+    mode: 0750
+    remote_src: true
+    creates: '{{ vmagent_bin_dir }}/{{ vmagent_executable }}'
+  check_mode: false
+
+- name: 'VMagent | Install | Ensure existence of /etc/systemd/system/vmagent.service.d'
+  ansible.builtin.file:
+    path: '/etc/systemd/system/vmagent.service.d'
+    state: 'directory'
+    owner: 'root'
+    group: 'root'
+    mode: 0755
+
+- name: 'VMagent | Install | Create Systemd unit'
+  ansible.builtin.template:
+    src: '{{ file.src }}'
+    dest: '/etc/systemd/system/{{ file.dest | default(file.src | replace(".j2", "")) }}'
+    owner: '{{ file.owner | default("root") }}'
+    group: '{{ file.group | default("root") }}'
+    mode: '{{ file.mode | default("0644") }}'
+  loop:
+    - { src: 'vmagent.service.j2'}
+    - { src: 'vmagent.params.dropin.conf.j2', dest: 'vmagent.service.d/vmagent.params.dropin.conf' }
+  loop_control:
+    loop_var: 'file'
+    label: '{{ file.src }}'
+  notify:
+    - 'VMagent restart'
+
+- name: 'VMagent | Install | Deploy preexec autoconf script'
+  ansible.builtin.template:
+    src: 'vmagent_auto_configure.sh.j2'
+    dest: '{{ vmagent_bin_dir }}/vmagent_auto_configure.sh'
+    owner: 'root'
+    group: 'root'
+    mode: 0750
+  notify:
+    - 'VMagent restart'
+  when: 'vmagent_auto_configure | bool'

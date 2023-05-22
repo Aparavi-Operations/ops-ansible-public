@@ -1,0 +1,38 @@
+[Unit]
+Description=VictoriaMetrics Agent
+After=network.target
+
+[Service]
+Type=simple
+SyslogIdentifier=vmagent
+User={{ vmagent_system_user }}
+Group={{ vmagent_system_group }}
+
+StartLimitBurst=5
+StartLimitInterval=0
+Restart=on-failure
+RestartSec=5
+
+{% if vmagent_auto_configure | bool %}
+ExecStartPre=+{{ vmagent_bin_dir }}/vmagent_auto_configure.sh "{{ vmagent_config_dir }}"
+{% endif %}
+ExecStart={{ vmagent_bin_dir }}/{{ vmagent_executable }} -envflag.enable -envflag.prefix=vm_
+ExecStop=/bin/kill -s SIGTERM $MAINPID
+ExecReload=/bin/kill -HUP $MAINPID
+
+Environment="vm_promscrape_config={{ vmagent_config_dir }}/vmagent.yml"
+Environment="vm_remoteWrite_url={{ vmagent_remote_write_url }}"
+Environment="vm_remoteWrite_tmpDataPath={{ vmagent_remote_write_tmp_dir }}"
+{% for option, value in vmagent_service_options.items() %}
+Environment="vm_{{ option | replace(".", "_") }}={{ value | replace("%", "%%") }}"
+{% endfor %}
+
+PrivateTmp=yes
+ProtectHome=yes
+NoNewPrivileges=yes
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=yes
+
+[Install]
+WantedBy=multi-user.target

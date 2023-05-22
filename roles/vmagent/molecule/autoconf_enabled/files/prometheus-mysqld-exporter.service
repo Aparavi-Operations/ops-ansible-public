@@ -1,0 +1,20 @@
+[Unit]
+Description=Prometheus MySQLd Exporter
+After=network.target
+
+[Service]
+SyslogIdentifier=mysqld_exporter
+Restart=always
+Type=simple
+User=mysqld-exp
+Group=mysqld-exp
+Environment='DATA_SOURCE_NAME=monitoring:pass@(db:3306)/'
+ExecStart=/usr/local/bin/mysqld_exporter \
+    --web.listen-address=0.0.0.0:9104 \
+    --web.config.file=/etc/prometheus-mysqld-exporter/web_config.yml \
+    --collect.slave_status \
+    --collect.info_schema.processlist \
+    --collect.info_schema.processlist.min_time=1
+
+[Install]
+WantedBy=multi-user.target

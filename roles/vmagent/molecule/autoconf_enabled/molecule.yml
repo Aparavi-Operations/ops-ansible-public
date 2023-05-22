@@ -1,0 +1,19 @@
+---
+
+dependency:
+  name: 'galaxy'
+driver:
+  name: 'docker'
+platforms:
+  - name: 'debian11-autoconf_enabled'
+    image: 'geerlingguy/docker-debian11-ansible'
+    pre_build_image: true
+    platform: 'linux/amd64'
+    command: ''
+    volumes:
+      - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
+    privileged: true
+provisioner:
+  name: 'ansible'
+verifier:
+  name: 'ansible'

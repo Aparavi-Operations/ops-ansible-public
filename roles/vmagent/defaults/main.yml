@@ -1,0 +1,64 @@
+---
+
+vmagent_version: '1.87.5'
+vmagent_system_user: 'vmagent'
+vmagent_system_group: 'vmagent'
+
+# Paths
+vmagent_bin_dir: '/usr/local/bin/victoria-metrics-{{ vmagent_version }}'
+vmagent_executable: 'vmagent-prod'
+
+# Binary download
+vmagent_repo_url: 'https://github.com/VictoriaMetrics/VictoriaMetrics'
+vmagent_base_url: '{{ vmagent_repo_url }}/releases/download/v{{ vmagent_version }}'
+vmagent_download_url: '{{ vmagent_base_url }}/vmutils-linux-amd64-v{{ vmagent_version }}.tar.gz'
+
+# Remote write
+vmagent_remote_write_url: ''  # Must be set externally
+vmagent_remote_write_tmp_dir: '/var/tmp/vmagent-remote-tmp'
+## Interval for flushing the data to remote storage. This option takes effect only when less than 10K data points per second are pushed to -remoteWrite.url (default 1s)
+vmagent_remote_write_flush_interval: '10s'
+
+# Service
+vmagent_service_state: '{{ ("packer" not in group_names) | ternary ("started", "stopped") }}'
+vmagent_service_enable: '{{ "packer" not in group_names }}'
+vmagent_service_options:
+  memory.allowedBytes: '10MiB'
+  remoteWrite.flushInterval: '15s'
+
+# Configuration
+vmagent_auto_configure: false
+
+## Example labels configuration
+vmagent_auto_configure_labels:
+  node_exporter:
+    component: ''
+    subcomponent: ''
+  mysqld_exporter:
+    component: ''
+    subcomponent: ''
+    service_instance: ''
+
+vmagent_config_dir: '/etc/vm/vmagent'
+vmagent_config_global_labels: {}
+  #  env: nonprod
+  #  service_instance: 'us_platform'
+vmagent_config_global_scrape_interval: '1m'
+
+vmagent_main_config:
+  global:
+    scrape_interval: '{{ vmagent_config_global_scrape_interval }}'
+    external_labels: '{{ vmagent_config_global_labels }}'
+
+  scrape_config_files:
+    - '{{ vmagent_config_dir }}/scrape_*.yml'
+
+  scrape_configs:
+    - job_name: 'vmagent'
+      static_configs:
+        - targets:
+            - 'localhost:8429'
+          labels:
+            service: 'monitoring'
+            component: 'vm'
+            subcomponent: 'vamgent'

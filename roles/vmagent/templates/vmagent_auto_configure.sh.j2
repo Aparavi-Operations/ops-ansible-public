@@ -1,0 +1,77 @@
+#jinja2:lstrip_blocks: True
+#!/bin/bash
+
+{% macro labels(exporter) %}
+{% if vmagent_auto_configure_labels.get(exporter, None) %}
+      labels:
+        {% for k, v in vmagent_auto_configure_labels.get(exporter, {}).items() %}
+        {{ k }}: '{{ v }}'
+        {% endfor %}
+{% endif %}
+{% endmacro %}
+
+set -o pipefail
+vmagent_config_dir=$1
+
+### Node exporter discovery
+echo "Detecting «Prometheus Node Exporter» systemd service"
+scrape_file="${vmagent_config_dir}/scrape_auto_node_exporter.yml"
+if systemctl is-enabled -q node_exporter.service; then
+  echo "  enabled, checking TCP port"
+  port=$(systemctl show 'node_exporter.service' --no-block --property ExecStart \
+    | grep -oP '(--web.listen-address\s*=\s*[0-9.]+:)\d+' \
+    | awk -F : '{ print $2 }' \
+  )
+  if [ $? -eq 0 ] && [ "$port" != "" ]; then
+    echo "  discovered port $port"
+  else
+    port=9100
+    echo "  port not discovered, defaults to $port"
+  fi
+  cat << EOF > "${scrape_file}"
+---
+
+- job_name: 'node_exporter'
+  static_configs:
+    - targets:
+        - '127.0.0.1:${port}'
+{{ labels('node_exporter') }}
+EOF
+else
+  echo "  disabled or not installed"
+  rm "${scrape_file}" 2>/dev/null
+fi
+
+### Mysqld exporter discovery
+echo "Detecting «Prometheus Mysqld Exporter» systemd service"
+scrape_file="${vmagent_config_dir}/scrape_auto_mysqld_exporter.yml"
+if systemctl is-enabled -q prometheus-mysqld-exporter.service; then
+  echo "  enabled, checking TCP port"
+  port=$(systemctl show 'prometheus-mysqld-exporter.service' --no-block --property ExecStart \
+    | grep -oP '(--web.listen-address\s*=\s*[0-9.]+:)\d+' \
+    | awk -F : '{ print $2 }' \
+  )
+  if [ $? -eq 0 ] && [ "$port" != "" ]; then
+    echo "  discovered port $port"
+  else
+    port=9100
+    echo "  port not discovered, defaults to $port"
+  fi
+  cat << EOF > "${scrape_file}"
+---
+
+- job_name: 'mysqld_exporter'
+  scheme: 'https'
+  tls_config:
+    insecure_skip_verify: true
+  static_configs:
+    - targets:
+        - '127.0.0.1:${port}'
+{{ labels('mysqld_exporter') }}
+EOF
+else
+  echo "  disabled or not installed"
+  rm "${scrape_file}" 2>/dev/null
+fi
+
+exit 0

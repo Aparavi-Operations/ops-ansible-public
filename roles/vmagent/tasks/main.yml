@@ -1,0 +1,32 @@
+---
+
+- name: 'VMagent | Preflight'
+  ansible.builtin.import_tasks: 'preflight.yml'
+  become: true
+  tags:
+    - 'install'
+    - 'configure'
+
+- name: 'VMagent | Install'
+  ansible.builtin.import_tasks: 'install.yml'
+  become: true
+  tags:
+    - 'install'
+
+- name: 'VMagent | Configure'
+  ansible.builtin.import_tasks: 'configure.yml'
+  become: true
+  tags:
+    - 'configure'
+
+- name: 'VMagent | Flush handlers'
+  ansible.builtin.meta: 'flush_handlers'
+
+- name: 'VMagent | Set service state'
+  ansible.builtin.service:
+    name: 'vmagent'
+    state: '{{ vmagent_service_state }}'
+    enabled: '{{ vmagent_service_enable }}'
+  tags:
+    - 'install'
+    - 'configure'

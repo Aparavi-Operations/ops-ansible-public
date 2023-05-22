@@ -1,0 +1,73 @@
+---
+
+- name: 'Verify'
+  hosts: 'all'
+  gather_facts: false
+
+  tasks:
+    - name: 'Get VMagent systemd service'
+      ansible.builtin.systemd:
+        name: 'vmagent'
+      register: __vmagent
+
+    - name: 'Check VMagent systemd service state'
+      ansible.builtin.assert:
+        that: '__vmagent.status.ActiveState == "active"'
+
+    - name: 'Check VMagent systemd service enabled'
+      ansible.builtin.assert:
+        that: '__vmagent.status.UnitFileState == "enabled"'
+
+    - name: 'Get VMagent targets, check vmagent job health'
+      ansible.builtin.uri:
+        url: 'http://localhost:8429/api/v1/targets'
+        return_content: true
+      retries: 10
+      delay: 6
+      until: |
+        "success" == __targets.json.status
+        and
+        "up" == (__targets.json.data.activeTargets | selectattr("discoveredLabels.job", "match", "vmagent") | first).health
+      register: '__targets'
+
+    - name: 'Get vmagent job target'
+      ansible.builtin.set_fact:
+        __vmagent_job: '{{ __targets.json.data.activeTargets | selectattr("discoveredLabels.job", "match", "vmagent") | first }}'
+
+    - name: 'Check vmagent job target'
+      ansible.builtin.assert:
+        that:
+          - '__vmagent_job.labels.job == "vmagent"'
+          - '__vmagent_job.labels.service == "monitoring"'
+        success_msg: 'vmagent job is OK'
+
+    - name: 'Get node_exporter job target'
+      ansible.builtin.set_fact:
+        __node_exporter_jobs: '{{ __targets.json.data.activeTargets | selectattr("discoveredLabels.job", "match", "node_exporter") }}'
+
+    - name: 'Check node_exporter job target'
+      ansible.builtin.assert:
+        that:
+          - '__node_exporter_jobs | length == 1'
+          - '__node_exporter_jobs[0].labels.job == "node_exporter"'
+          - '__node_exporter_jobs[0].labels.component == "node_exporter"'
+          - '__node_exporter_jobs[0].labels.subcomponent == "node_exporter_subcomponent"'
+          - '__node_exporter_jobs[0].discoveredLabels.__address__ == "127.0.0.1:9100"'
+          - '__node_exporter_jobs[0].discoveredLabels.__scheme__ == "http"'
+        success_msg: 'node_exporter job is OK'
+
+    - name: 'Get mysqld_exporter job target'
+      ansible.builtin.set_fact:
+        __mysqld_exporter_jobs: '{{ __targets.json.data.activeTargets | selectattr("discoveredLabels.job", "match", "mysqld_exporter") }}'
+
+    - name: 'Check mysqld_exporter job target'
+      ansible.builtin.assert:
+        that:
+          - '__mysqld_exporter_jobs | length == 1'
+          - '__mysqld_exporter_jobs[0].labels.job == "mysqld_exporter"'
+          - '__mysqld_exporter_jobs[0].labels.component == "mysqld_exporter"'
+          - '__mysqld_exporter_jobs[0].labels.subcomponent == "mysqld_exporter_subcomponent"'
+          - '__mysqld_exporter_jobs[0].labels.service_instance == "testdb"'
+          - '__mysqld_exporter_jobs[0].discoveredLabels.__address__ == "127.0.0.1:9104"'
+          - '__mysqld_exporter_jobs[0].discoveredLabels.__scheme__ == "https"'
+        success_msg: 'mysqld_exporter job is OK'

@@ -1,0 +1,9 @@
+---
+
+- name: 'VMagent restart'
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: 'vmagent'
+    state: 'restarted'
+  become: true
+  when: 'vmagent_service_state != "stopped"'

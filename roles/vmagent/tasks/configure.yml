@@ -1,0 +1,19 @@
+---
+
+- name: 'VMagent | Install | Ensure existence of config dirs'
+  ansible.builtin.file:
+    path: '{{ vmagent_config_dir }}'
+    state: 'directory'
+    owner: 'root'
+    group: '{{ vmagent_system_group }}'
+    mode: 0750
+
+- name: 'VMagent | Install | Deploy main config'
+  ansible.builtin.copy:
+    dest: '{{ vmagent_config_dir }}/vmagent.yml'
+    content: '{{ vmagent_main_config | to_nice_yaml(indent=2) }}'
+    owner: 'root'
+    group: '{{ vmagent_system_group }}'
+    mode: 0640
+  notify:
+    - 'VMagent restart'

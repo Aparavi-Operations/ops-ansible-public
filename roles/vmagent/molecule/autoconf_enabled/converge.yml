@@ -11,7 +11,7 @@
         dest: '/etc/systemd/system/'
         owner: 'root'
         group: 'root'
-        mode: 0644
+        mode: '0644'
       loop:
         - 'node_exporter.service'
         - 'prometheus-mysqld-exporter.service'

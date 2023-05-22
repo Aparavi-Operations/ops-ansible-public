@@ -1,0 +1,14 @@
+---
+
+exclude_paths: []
+
+warn_list:
+  - 'internal-error'
+  - 'yaml[line-length]'
+  - 'ignore-errors'  # Use failed_when and specify error conditions instead of using ignore_errors.
+  - 'experimental'  # all rules tagged as experimental
+
+skip_list: []
+
+use_default_rules: true
+verbosity: 0

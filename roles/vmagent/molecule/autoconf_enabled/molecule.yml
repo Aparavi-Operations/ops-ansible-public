@@ -8,11 +8,27 @@ platforms:
   - name: 'debian11-autoconf_enabled'
     image: 'geerlingguy/docker-debian11-ansible'
     pre_build_image: true
+    privileged: true
     platform: 'linux/amd64'
     command: ''
     volumes:
       - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
+  - name: 'centos8-autoconf_enabled'
+    image: 'geerlingguy/docker-centos8-ansible'
+    pre_build_image: true
     privileged: true
+    platform: 'linux/amd64'
+    command: ''
+    volumes:
+      - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
+  - name: 'ubuntu2204-autoconf_enabled'
+    image: 'geerlingguy/docker-ubuntu2204-ansible'
+    pre_build_image: true
+    privileged: true
+    platform: 'linux/amd64'
+    command: ''
+    volumes:
+      - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
 provisioner:
   name: 'ansible'
 verifier:

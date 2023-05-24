@@ -23,7 +23,7 @@
     state: 'directory'
     owner: 'root'
     group: '{{ vmagent_system_group }}'
-    mode: 0750
+    mode: '0750'
 
 - name: 'VMagent | Install | Ensure existence of remote write tmp directory'
   ansible.builtin.file:
@@ -31,7 +31,7 @@
     state: 'directory'
     owner: 'root'
     group: '{{ vmagent_system_group }}'
-    mode: 0750
+    mode: '0750'
 
 - name: 'VMagent | Install | Download VMagent'
   ansible.builtin.unarchive:
@@ -41,10 +41,14 @@
       - '{{ vmagent_executable }}'
     owner: 'root'
     group: '{{ vmagent_system_group }}'
-    mode: 0750
+    mode: '0750'
     remote_src: true
     creates: '{{ vmagent_bin_dir }}/{{ vmagent_executable }}'
   check_mode: false
+  register: '__result'
+  retries: 3
+  delay: 5
+  until: '__result is succeeded'
 
 - name: 'VMagent | Install | Ensure existence of /etc/systemd/system/vmagent.service.d'
   ansible.builtin.file:
@@ -52,7 +56,7 @@
     state: 'directory'
     owner: 'root'
     group: 'root'
-    mode: 0755
+    mode: '0755'
 
 - name: 'VMagent | Install | Create Systemd unit'
   ansible.builtin.template:
@@ -76,7 +80,7 @@
     dest: '{{ vmagent_bin_dir }}/vmagent_auto_configure.sh'
     owner: 'root'
     group: 'root'
-    mode: 0750
+    mode: '0750'
   notify:
     - 'VMagent restart'
   when: 'vmagent_auto_configure | bool'

@@ -6,7 +6,7 @@
     state: 'directory'
     owner: 'root'
     group: '{{ vmagent_system_group }}'
-    mode: 0750
+    mode: '0750'
 
 - name: 'VMagent | Install | Deploy main config'
   ansible.builtin.copy:
@@ -14,6 +14,6 @@
     content: '{{ vmagent_main_config | to_nice_yaml(indent=2) }}'
     owner: 'root'
     group: '{{ vmagent_system_group }}'
-    mode: 0640
+    mode: '0640'
   notify:
     - 'VMagent restart'

@@ -15,7 +15,7 @@ Example playbook with autoconf mode enabled.
   roles:
     - role: vmagent
       vars:
-        vmagent_remote_write_url: 'https://vmcluster-url/insert/0/prometheus/api/v1/import/prometheus'
+        vmagent_remote_write_url: 'https://vmcluster-url/insert/0/prometheus/api/v1/write'
         vmagent_config_global_labels:
           env: 'nonprod'
           service: 'aparavi'

@@ -3,8 +3,8 @@
 vmagent_remote_write_url: 'https://localhost'
 vmagent_config_global_scrape_interval: '5s'
 vmagent_config_global_labels:
-    env: 'env'
-    service: 'service'
+  env: 'env'
+  service: 'service'
 
 vmagent_auto_configure: true
 vmagent_auto_configure_labels:

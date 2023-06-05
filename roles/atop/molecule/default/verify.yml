@@ -1,0 +1,41 @@
+---
+
+- name: 'Verify'
+  hosts: 'all'
+  gather_facts: false
+
+  tasks:
+    - name: 'Get Atop systemd service'
+      ansible.builtin.systemd:
+        name: 'atop'
+      register: __atop
+
+    - name: 'Check Atop systemd service state'
+      ansible.builtin.assert:
+        that: '__atop.status.ActiveState == "active"'
+
+    - name: 'Check Atop systemd service enabled'
+      ansible.builtin.assert:
+        that: '__atop.status.UnitFileState == "enabled"'
+
+    - name: 'Get Atop process command line'
+      ansible.builtin.command: 'pgrep atop -a'
+      changed_when: false
+      register: '__result'
+
+    - name: 'Check Atop process collection interval'
+      ansible.builtin.assert:
+        that: 'atop_interval_seconds == (__result.stdout | regex_search("\d+$") | int)'
+
+    - name: 'Check Atop output'
+      ansible.builtin.shell:
+        cmd: 'atop -r /var/log/atop/atop_* -g -f 1 | grep CPU | grep idle'
+      register: '__result'
+      failed_when: '"CPU |" not in __result.stdout'
+      changed_when: false
+      retries: 5
+      delay: 5
+
+    - name: 'Dump Atop output'
+      ansible.builtin.debug:
+        msg: '{{ __result.stdout }}'

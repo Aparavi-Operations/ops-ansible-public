@@ -14,7 +14,7 @@
       ansible.builtin.include_vars: '{{ ansible_distribution }}.yml'
 
     - name: 'Atop | Update apt cache'
-      apt:
+      ansible.builtin.apt:
         update_cache: true
         force_apt_get: true
         cache_valid_time: 3600
@@ -30,7 +30,7 @@
     - name: 'Atop | Set collection interval'
       ansible.builtin.lineinfile:
         dest: '{{ atop_config_file_path }}'
-        regex: '"^(#\s.*)?LOGINTERVAL\s*='
+        regex: '^(#\s.*)?LOGINTERVAL\s*='
         line: 'LOGINTERVAL={{ atop_interval_seconds }}'
       notify:
         - 'Atop | restart atop'

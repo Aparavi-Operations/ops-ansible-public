@@ -4,6 +4,24 @@
   become: true
   block:
 
+    - name: 'Atop | Get package manager'
+      ansible.builtin.setup:
+        filter:
+          - 'ansible_distribution'
+          - 'ansible_pkg_mgr'
+
+    - name: 'Atop | Include vars'
+      ansible.builtin.include_vars: '{{ ansible_distribution }}.yml'
+
+    - name: 'Atop | Update apt cache'
+      apt:
+        update_cache: true
+        force_apt_get: true
+        cache_valid_time: 3600
+      retries: 2
+      delay: 5
+      when: 'ansible_pkg_mgr == "apt"'
+
     - name: 'Atop | Install'
       ansible.builtin.package:
         name: 'atop'
@@ -11,12 +29,12 @@
 
     - name: 'Atop | Set collection interval'
       ansible.builtin.lineinfile:
-        dest: '/etc/default/atop'
-        regex: '"^(#)?LOGINTERVAL\s*='
+        dest: '{{ atop_config_file_path }}'
+        regex: '"^(#\s.*)?LOGINTERVAL\s*='
         line: 'LOGINTERVAL={{ atop_interval_seconds }}'
       notify:
         - 'Atop | restart atop'
-      register: 'atop_config_file'
+      register: '__atop_config_file'
 
     - name: 'Atop | Set service enabled flag'
       ansible.builtin.service:
@@ -27,4 +45,4 @@
       ansible.builtin.service:
         name: 'atop'
         state: '{{ "stopped" if "packer" in group_names else "started" }}'
-      when: 'not atop_config_file is changed'
+      when: 'not __atop_config_file is changed'

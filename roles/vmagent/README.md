@@ -1,7 +1,7 @@
-Role Name
-=========
+VictoraMetrics agent Ansible role
+=================================
 
-VMAgent deployment and configuration role.
+VictoraMetrics agent deployment and configuration Ansible role.
 
 Example Playbook
 ----------------

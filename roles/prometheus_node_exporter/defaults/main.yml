@@ -3,7 +3,7 @@
 node_exporter_disabled_collectors: []
 node_exporter_enabled_collectors:
   - systemd:
-      unit-exclude: '^((.+\.socket)|((acpid|apt-|atd|atop|basic|blk-|blockdev|dev-|dbus|console-|cloud-|crypt|dm-|e2scrub_|first-boot|graphical|getty|kmod|man-db|modprobe|multi-user|network|nss|serial|shutdown|swap|rpc|systemd-|snap|lvm2|user|umount).*))$'
+      unit-exclude: '^((.+\.socket)|((acpid|apt-|atd|atop|basic|blk-|blockdev|dev-|dbus|console-|cloud-|crypt|dm-|e2scrub_|first-boot|graphical|getty|kmod|man-db|modprobe|multi-user|network|nss|serial|shutdown|swap|rpc|systemd-|snap|lvm2|user|umount).*))$'  # yamllint disable-line rule:line-length
   - filesystem:
       ignored-fs-types: '^(sys|proc|auto|rpc_pipe|tmp)fs$'
       ignored-mount-points: '^/(sys|proc|dev|boot)($|/)'

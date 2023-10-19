@@ -1,6 +1,6 @@
 ---
 
-beat_version: '7.17.9'
+beat_version: '8.10.3'
 beat_oss_version: false
 beat_version_lock: true
 beat_use_repository: true

@@ -6,7 +6,9 @@
     name: 'vector'
     state: 'restarted'
   become: true
-  when: 'vector_started'
+  when:
+    - 'vector_started'
+    - '"packer" not in group_names'
 
 - name: 'Reload Vector Linux'
   ansible.builtin.systemd:

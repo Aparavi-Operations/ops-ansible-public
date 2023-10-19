@@ -21,7 +21,7 @@
 - name: 'Vector | Linux | Set service state'
   ansible.builtin.service:
     name: 'vector'
-    state: '{{ (vector_started and ("packer" not in group_names)) | ternary("started", "stopped") }}'
+    state: '{{ vector_started | ternary("started", "stopped") }}'
     enabled: '{{ vector_enabled }}'
   become: true
   tags:

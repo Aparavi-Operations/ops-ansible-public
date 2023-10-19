@@ -1,9 +1,9 @@
 ---
 
-vector_version: '0.29.1'
+vector_version: '0.33.0'
 vector_conf: {}
 
-vector_started: true
-vector_enabled: true
+vector_started: '{{ "packer" not in group_names }}'
+vector_enabled: '{{ "packer" not in group_names }}'
 
 vector_https_proxy: ''

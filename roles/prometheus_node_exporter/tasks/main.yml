@@ -1,23 +1,23 @@
 ---
 
-- name: 'Prometheus nodejs | Set required facts'
+- name: 'Prometheus node_exporter | Set required facts'
   ansible.builtin.import_tasks: 'set_facts.yml'
   tags:
     - 'configure'
 
-- name: 'Prometheus nodejs | Check installation'
+- name: 'Prometheus node_exporter | Check installation'
   ansible.builtin.import_tasks: 'install.yml'
   tags:
     - 'install'
   become: true
 
-- name: 'Prometheus nodejs | Check configuration'
+- name: 'Prometheus node_exporter | Check configuration'
   ansible.builtin.import_tasks: 'configure.yml'
   tags:
     - 'configure'
   become: true
 
-- name: 'Prometheus nodejs | Register node-exporter in Consul'
+- name: 'Prometheus node_exporter | Register node-exporter in Consul'
   ansible.builtin.import_tasks: 'consul_integration.yml'
   when: 'node_exporter_consul_integration'
   tags:

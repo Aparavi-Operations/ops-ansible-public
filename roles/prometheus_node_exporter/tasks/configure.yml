@@ -1,6 +1,6 @@
 ---
 
-- name: 'Prometheus nodejs | Check Node Exporter service status'
+- name: 'Prometheus node_exporter | Check Node Exporter service status'
   ansible.builtin.service:
     name: 'node_exporter'
     state: '{{ node_exporter_service_state }}'

@@ -1,6 +1,6 @@
 ---
 
-- name: 'Prometheus nodejs | Set Facts | Gather required facts'
+- name: 'Prometheus node_exporter | Set Facts | Gather required facts'
   ansible.builtin.setup:
     filter:
       - 'ansible_service_mgr'
@@ -8,23 +8,23 @@
       - 'ansible_selinux'
       - 'ansible_os_family'
 
-- name: 'Prometheus nodejs | Set Facts | Fail on unsupported init systems'
+- name: 'Prometheus node_exporter | Set Facts | Fail on unsupported init systems'
   ansible.builtin.debug:
     msg: 'Using init.d script, not a systemd OS'
   when: 'ansible_service_mgr != "systemd"'
 
-- name: 'Prometheus nodejs | Set Facts | Check collectors'
+- name: 'Prometheus node_exporter | Set Facts | Check collectors'
   ansible.builtin.fail:
     msg: 'Collector cannot be both disabled and enabled'
   loop: '{{ node_exporter_disabled_collectors }}'
   when: 'item in node_exporter_enabled_collectors'
 
-- name: 'Prometheus nodejs | Set Facts | Include main variables'
+- name: 'Prometheus node_exporter | Set Facts | Include main variables'
   ansible.builtin.include_vars:
     file: 'main.yml'
     name: 'node_exporter_common'
 
-- name: 'Prometheus nodejs | Set Facts | Gather OS specific variables'
+- name: 'Prometheus node_exporter | Set Facts | Gather OS specific variables'
   ansible.builtin.include_vars:
     dir: '{{ item }}'
     name: 'node_exporter_custom'
@@ -33,13 +33,13 @@
     - '{{ ansible_os_family | lower }}'
     - 'default.yml'
 
-- name: 'Prometheus nodejs | Set Facts | Set architecture variable'
+- name: 'Prometheus node_exporter | Set Facts | Set architecture variable'
   ansible.builtin.set_fact:
     node_exporter_arch: >-
       {{ node_exporter_common.go_arch_map[ansible_architecture] |
       default(ansible_architecture) }}
 
-- name: 'Prometheus nodejs | Set Facts | Set all required facts'
+- name: 'Prometheus node_exporter | Set Facts | Set all required facts'
   ansible.builtin.set_fact:
     node_exporter_sha_url: '{{ node_exporter_common.base_url }}/sha256sums.txt'
     node_exporter_tar_url: >-

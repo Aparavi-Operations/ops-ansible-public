@@ -1,6 +1,11 @@
 ---
 
-- name: 'Prometheus nodejs | Restart node_exporter'
+- name: 'Prometheus node_exporter | Reload systemd'
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: 'Prometheus node_exporter | Restart node_exporter'
   ansible.builtin.systemd:
     daemon_reload: true
     name: 'node_exporter'
@@ -10,7 +15,7 @@
     - 'ansible_service_mgr == "systemd"'
   become: true
 
-- name: 'Prometheus nodejs | Restart node_exporter (init.d)'
+- name: 'Prometheus node_exporter | Restart node_exporter (init.d)'
   ansible.builtin.service:
     name: 'node_exporter'
     state: 'restarted'
@@ -19,7 +24,7 @@
     - 'ansible_service_mgr != "systemd"'
   become: true
 
-- name: 'Prometheus nodejs | Reload consul config'
+- name: 'Prometheus node_exporter | Reload consul config'
   ansible.builtin.systemd:
     name: 'consul'
     state: 'reloaded'

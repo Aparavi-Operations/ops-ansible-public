@@ -10,17 +10,17 @@ User={{ node_exporter_system_user }}
 Group={{ node_exporter_system_group }}
 Nice=-5
 ExecStart=/usr/local/bin/node_exporter \
-{% for collector in node_exporter_enabled_collectors -%}
+{% for collector in node_exporter_enabled_collectors %}
 {%   if not collector is mapping %}
     --collector.{{ collector }} \
 {%   else -%}
-{%     set name, options = (collector.items()|list)[0] -%}
+{%     set name, options = (collector.items()|list)[0] %}
     --collector.{{ name }} \
 {%     for k,v in options|dictsort %}
-    --collector.{{ name }}.{{ k }}={{ v }} \
-{%     endfor -%}
-{%   endif -%}
-{% endfor -%}
+    --collector.{{ name }}.{{ k }}='{{ v }}' \
+{%     endfor %}
+{%   endif %}
+{% endfor %}
 {% for collector in node_exporter_disabled_collectors %}
     --no-collector.{{ collector }} \
 {% endfor %}

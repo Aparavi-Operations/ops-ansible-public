@@ -1,17 +1,17 @@
 ---
 
-- name: 'Prometheus nodejs | Install | Install dependencies'
+- name: 'Prometheus node_exporter | Install | Install dependencies'
   ansible.builtin.package:
     name: '{{ node_exporter_custom.dependencies }}'
     state: 'present'
 
-- name: 'Prometheus nodejs | Install | Create the node_exporter group'
+- name: 'Prometheus node_exporter | Install | Create the node_exporter group'
   ansible.builtin.group:
     name: '{{ node_exporter_system_group }}'
     state: 'present'
     system: true
 
-- name: 'Prometheus nodejs | Install | Create the node_exporter user'
+- name: 'Prometheus node_exporter | Install | Create the node_exporter user'
   ansible.builtin.user:
     name: '{{ node_exporter_system_user }}'
     groups: '{{ node_exporter_system_group }}'
@@ -20,23 +20,23 @@
     system: true
     createhome: false
 
-- name: 'Prometheus nodejs | Install | Check installation'
+- name: 'Prometheus node_exporter | Install | Check installation'
   ansible.builtin.stat:
     path: '/usr/local/bin/node_exporter'
   register: '_installation'
 
-- name: 'Prometheus nodejs | Installation block'
+- name: 'Prometheus node_exporter | Installation block'
   check_mode: false
   when: 'not _installation.stat.exists or node_exporter_force_install'
   block:
 
-    - name: 'Prometheus nodejs | Install | Create temporary directory'
+    - name: 'Prometheus node_exporter | Install | Create temporary directory'
       ansible.builtin.tempfile:
         state: 'directory'
       check_mode: false
       register: '_tmp_dir'
 
-    - name: 'Prometheus nodejs | Install | Download node_exporter binary'
+    - name: 'Prometheus node_exporter | Install | Download node_exporter binary'
       ansible.builtin.get_url:
         url: '{{ node_exporter_tar_url }}'
         dest: >-
@@ -50,7 +50,7 @@
       retries: 5
       delay: 2
 
-    - name: 'Prometheus nodejs | Install | Unpack node_exporter binary'
+    - name: 'Prometheus node_exporter | Install | Unpack node_exporter binary'
       ansible.builtin.unarchive:
         src: >-
           {{ _tmp_dir.path }}/node_exporter-{{ node_exporter_version }}.linux-{{
@@ -58,7 +58,7 @@
         dest: '{{ _tmp_dir.path }}'
         remote_src: true
 
-    - name: 'Prometheus nodejs | Install | Propagate node_exporter binaries'
+    - name: 'Prometheus node_exporter | Install | Propagate node_exporter binaries'
       ansible.builtin.copy:
         src: >-
           {{ _tmp_dir.path }}/node_exporter-{{ node_exporter_version }}.linux-{{
@@ -68,16 +68,16 @@
         owner: '{{ node_exporter_system_user }}'
         group: '{{ node_exporter_system_group }}'
         remote_src: true
-      notify: 'Prometheus nodejs | Restart node_exporter'
+      notify: 'Prometheus node_exporter | Restart node_exporter'
 
   always:
 
-    - name: 'Prometheus nodejs | Install | Remove Temp dir'
+    - name: 'Prometheus node_exporter | Install | Remove Temp dir'
       ansible.builtin.file:
         path: '{{ _tmp_dir.path }}'
         state: 'absent'
 
-- name: 'Prometheus nodejs | Install | Copy the Node Exporter systemd service'
+- name: 'Prometheus node_exporter | Install | Copy the Node Exporter systemd service'
   ansible.builtin.template:
     src: 'node_exporter.service.j2'
     dest: '/etc/systemd/system/node_exporter.service'
@@ -85,10 +85,11 @@
     group: 'root'
     mode: '0644'
   notify:
-    - 'Prometheus nodejs | Restart node_exporter'
+    - 'Prometheus node_exporter | Reload systemd'
+    - 'Prometheus node_exporter | Restart node_exporter'
   when: 'ansible_service_mgr == "systemd"'
 
-- name: 'Prometheus nodejs | Install | Copy the Node Exporter init.d script'
+- name: 'Prometheus node_exporter | Install | Copy the Node Exporter init.d script'
   ansible.builtin.template:
     src: 'node_exporter.j2'
     dest: '/etc/init.d/node_exporter'
@@ -96,10 +97,10 @@
     group: 'root'
     mode: '0750'
   notify:
-    - 'Prometheus nodejs | Restart node_exporter (init.d)'
+    - 'Prometheus node_exporter | Restart node_exporter (init.d)'
   when: 'ansible_service_mgr != "systemd"'
 
-- name: 'Prometheus nodejs | Install | Allow Node Exporter port in SELinux'
+- name: 'Prometheus node_exporter | Install | Allow Node Exporter port in SELinux'
   community.general.seport:
     ports: '{{ node_exporter_web_listen_port }}'
     proto: 'tcp'
